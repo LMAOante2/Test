@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html oncontextmenu="return false" lang="hr">
+
+<head>
+    <meta name="viewport"
+        content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Check Every Fivem Server Status">
+    <meta name="keywords" content="FiveM Server Status">
+    <meta name="author" content="FiveM Server Status">
+    <meta name="robots" content="index, follow">
+    <meta name="google-site-verification" content="HGvKcQ3b0bT5SE0yGNMlDwvYMaLh_PgTC2DnKvqywRo" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>FiveM Server Status</title>
+    <link rel="stylesheet" href="status.css">
+    <link rel="icon" href="slike/favicon-16x16.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="slike/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="slike/android-chrome-192x192.png" sizes="96x96" type="image/png">
+    <style>
+
+    </style>
+</head>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MYWVBW0EFL"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-MYWVBW0EFL');
+</script>
+
+<body onkeydown="zatvoriesc()" oncontextmenu="return false">
+
+    <input type="checkbox" id="menutoggle">
+    <label for="menutoggle" class="menutoggle-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+
+    <nav>
+        <div class="title">FiveM Server Status</div>
+    </nav>
+
+
+    <div style="text-align: center; margin-top: 20px;">
+        <input type="text" id="searchInput1" placeholder="Server ID (E.g. vz34af)" onkeydown="igracIme()">
+        <hr class="pretrazi1">
+    </div>
+
+    <div class="rules-container">
+        <div class="rule">
+            <h3><span id="serverName">Loading...</span></h3>
+            <hr style="margin-bottom: 20px; margin-top: 10px;">
+            <h3>Players: <span id="player-count">Loading...</span></h3>
+            <h3 id="server-status">
+                <span class="pulse" style="background: orange;"></span>Loading...
+            </h3>
+            <div>
+                <button id="refresh" onclick="refresh()" class="refresh">
+                    <i class="fas fa-refresh icon"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+            <h4 style="color: red;" id="tekst">Automatic refresh</h4>
+            <label class="switch">
+                <input type="checkbox" id="toggleMonitor">
+                <span class="slider"><i class="fas fa-refresh refreshslider"></i></span>
+            </label>
+
+
+
+        </div>
+    </div>
+
+
+    <div id="igraci" class="rules-container1">
+
+        <div id="cijelo" class="cijelo">
+            <div style="display: none;" id="kopirano" class="kopirano">
+                <h3 id="ime"></h3>
+                <button onclick="zatvori()">Close</button>
+            </div>
+        </div>
+        <input type="text" id="searchInput" placeholder="Search Player (BETA)" onkeydown="igracIme()">
+        <hr class="pretrazi">
+        <div id="igraclista">Loading...</div>
+    </div>
+
+    <footer>
+        <span><a href="tutorial.html">Tutorial</a></span>
+    </footer>
+
+
+</body>
+<script src="status.js"></script>
+
+</html>

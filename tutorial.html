@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="hr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1, minimum-scale=1">
+    <meta name="description" content="FiveM Serve Status Tutorial">
+    <meta name="keywords" content="FiveM, Tutorial, FiveM, Server, Status">
+    <meta name="author" content="FiveM Server Status">
+    <title>Tutorial | FiveM Server Status</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="status.css">
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+        }
+
+        .section {
+            max-width: 1000px;
+            margin: 150px auto;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+
+        .section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00bfff;
+        }
+
+        .section img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .section a {
+            color: #00bfff;
+            text-decoration: none;
+        }
+
+        .section a:hover {
+            text-decoration: underline;
+        }
+
+        .section p {
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .add-image-btn {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .add-image-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="title">Tutorial</div>
+    </nav>
+
+    <div class="section" id="section1">
+        <h2>STEP 1</h2>
+        <p>Go to <a target="_blank" draggable="false" href="https://servers.fivem.net/">FiveM Server List</a></p>
+    </div>
+
+    <div class="section" id="section2">
+        <h2>STEP 2</h2>
+        <p>Search the server whose status you want to view and click on it.</p>
+    </div>
+
+    <div class="section" id="section3">
+        <h2>STEP 3</h2>
+        <p>Copy last part of the link</p>
+        <img draggable="false" src="tutorial.png" alt="">
+    </div>
+
+    <footer>
+        <span><a draggable="false" href="serverstatus.html">Go back</a></span>
+    </footer>
+
+    <script>
+        function dodajSliku(sekcijaId, src, alt) {
+            const sekcija = document.getElementById(sekcijaId);
+            if (sekcija) {
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = alt;
+                sekcija.appendChild(img);
+            }
+        }
+
+    </script>
+</body>
+
+</html>
