@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blynk LED Control</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    button { padding: 15px 30px; font-size: 20px; margin: 10px; cursor: pointer; }
+    .on { background-color: #4CAF50; color: white; }
+    .off { background-color: #f44336; color: white; }
+  </style>
+</head>
+<body>
+  <h1>ESP32 LED Control via Blynk</h1>
+  <button class="on" onclick="toggleLED(1)">ON</button>
+  <button class="off" onclick="toggleLED(0)">OFF</button>
+  <h2 id="status">LED status: unknown</h2>
+
+  <script>
+    const authToken = "b2PSVZ5hMiKwnHrsWzHcKL-caGKt_E6P"; // Your Blynk Auth Token
+
+    function toggleLED(value) {
+      fetch(`https://blynk.cloud/external/api/update?token=${authToken}&pin=V0&value=${value}`)
+        .then(response => response.text())
+        .then(() => updateStatus());
+    }
+
+    function updateStatus() {
+      fetch(`https://blynk.cloud/external/api/get?token=${authToken}&pin=V0`)
+        .then(response => response.text())
+        .then(text => document.getElementById("status").innerHTML = "LED status: " + (text=="1" ? "ON" : "OFF"));
+    }
+
+    setInterval(updateStatus, 2000); // Refresh every 2 seconds
+    updateStatus();
+  </script>
+</body>
+</html>
