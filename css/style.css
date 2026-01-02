@@ -40,7 +40,8 @@ body {
     text-align: center;
 }
 
-.links {
+.links,
+.sponsors {
     max-width: 700px;
     margin: 0.4rem auto;
     display: flex;
@@ -48,7 +49,10 @@ body {
     gap: 8px;
 }
 
-.link-card {
+
+
+.link-card,
+.sponsor-card {
     text-align: center;
 }
 
@@ -156,7 +160,6 @@ iframe.loaded {
 
 .short:hover {
     transform: scale(1.1);
-    transition: transform 0.3s ease;
 }
 
 .short img {
@@ -173,13 +176,33 @@ footer {
     margin-top: 1rem;
 }
 
-.links {
+.links,
+.sponsors {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
 }
 
-.link-card {
+.social {
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 8px;
+    font-size: 1.5rem;
+    transition: color 0.2s;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.socisal i {
+    transition: all 0.3s ease;
+}
+
+.social i:hover {
+    transform: scale(1.2);
+    transition: all 0.3s ease;
+}
+
+.link-card,
+.sponsor-card {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -188,14 +211,15 @@ footer {
     background: #222;
     color: #fff;
     text-decoration: none;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.2s;
 }
 
 .link-card:hover {
     background: #333;
 }
 
-.link-icon {
+.link-icon,
+.sponsor-icon {
     width: 48px;
     height: 48px;
     margin-right: 20px;
@@ -203,13 +227,15 @@ footer {
     border-radius: 4px;
 }
 
-.link-content {
+.link-content,
+.sponsor-content {
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.link-emoji {
+.link-emoji,
+.sponsor-emoji {
     font-size: 1.2em;
 }
 
@@ -222,7 +248,6 @@ footer {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
 }
-
 
 @media (max-width: 480px) {
     body {
@@ -241,12 +266,14 @@ footer {
         height: 160px;
     }
 
-    .link-card {
+    .link-card,
+    .sponsor-card {
         flex-direction: row;
         padding: 10px;
     }
 
-    .link-icon {
+    .link-icon,
+    .sponsor-icon {
         width: 40px;
         height: 40px;
         margin-right: 12px;
@@ -262,12 +289,14 @@ footer {
         height: 180px;
     }
 
-    .links {
+    .links,
+    .sponsors {
         flex-direction: row;
         justify-content: center;
     }
 
-    .link-card {
+    .link-card,
+    .sponsor-card {
         width: calc(50% - 12px);
     }
 }
@@ -277,7 +306,8 @@ footer {
         height: 360px;
     }
 
-    .link-card {
+    .link-card,
+    .sponsor-card {
         width: auto;
     }
 }
@@ -298,4 +328,26 @@ footer {
     .btn:hover {
         transform: none;
     }
+}
+
+
+.sponsor-card,
+.link-card {
+    background: linear-gradient(135deg, #2a2a3a, #1e1e2a);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sponsor-card:hover,
+.link-card:hover {
+    background: linear-gradient(135deg, #34344a, #252535);
+    transform: translateY(-2px);
+}
+
+.sponsor-card::after {
+    content: "Sponsored";
+    margin-left: auto;
+    font-size: 0.7rem;
+    opacity: 0.7;
+    padding-left: 10px;
+    white-space: nowrap;
 }

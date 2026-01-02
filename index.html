@@ -10,9 +10,12 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
   <link rel="manifest" href="assets/site.webmanifest">
+  <script src="https://kit.fontawesome.com/ecbdcf2a50.js" crossorigin="anonymous"></script>
+
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
+
 <body class="theme-dark">
 
   <header class="profile">
@@ -20,7 +23,6 @@
     <h1>Flybrick_S60r</h1>
     <p>YouTuber • Gamer • Creator</p>
   </header>
-
 
   <section class="card video-card">
     <div class="video-header">
@@ -39,9 +41,13 @@
     <p id="videoFallback" hidden>No long video available.</p>
   </section>
 
-  <section draggable="false" loading="lazy" class="card"><section class="links" draggable="false"></section></section>
-  
+  <section draggable="false" loading="lazy" class="card">
+    <section class="links" draggable="false"></section>
+  </section>
 
+  <section draggable="false" loading="lazy" class="card">
+    <h2>Sponsors</h2><section class="sponsors" draggable="false"></section>
+  </section>
 
   <section class="card">
     <h2>Latest Shorts</h2>
@@ -50,25 +56,31 @@
 
   <footer>
     <p>© 2025 Flybrick_S60r</p>
+    <a target="_blank" class="social" draggable="false" href="https://www.youtube.com/@Flybrick_S60R"><i class="fa-brands fa-youtube" style="color: #ff0000;"></i></a>
+    <a target="_blank" class="social" draggable="false" href="https://www.instagram.com/flybrick_s60r"><i class="fa-brands fa-instagram" style="color: #ff0088;"></i></a>
+    <a target="_blank" class="social" draggable="false" href="https://www.twitch.tv/flybrick_s60r"><i class="fa-brands fa-twitch" style="color: #B197FC;"></i></a>
+    <a target="_blank" class="social" draggable="false" href="https://www.tiktok.com/@flybrick_s60r?ug_source=op.auth&ug_term=Linktr.ee&utm_source=awyc6vc625ejxp86&utm_campaign=tt4d_profile_link&_r=1"><i class="fa-brands fa-tiktok" style="color: #ffffff;"></i></a>
+    <a target="_blank" class="social" draggable="false" href="https://www.facebook.com/profile.php?id=100093144267320"><i class="fa-brands fa-facebook" style="color: #0400ff;"></i></a>
+    <a target="_blank" class="social" draggable="false" href="https://discord.com/invite/MfTswQaw5E"><i class="fa-brands fa-discord" style="color: #B197FC;"></i></a>
+    <a target="_blank" class="social" draggable="false" href="https://github.com/FlybrickS60R/Volvo-Cluster"><i class="fa-brands fa-github"></i></a>
   </footer>
 
   <script src="js/firebase-init.js"></script>
   <script src="js/public-links.js"></script>
   <script src="js/youtube.js"></script>
 
-
 <script>
+
 const linksContainer = document.querySelector(".links");
 
 firebase.database().ref("links").on("value", snapshot => {
   const data = snapshot.val();
   linksContainer.innerHTML = "";
-
   if (!data) return;
 
   Object.values(data).forEach(link => {
     const a = document.createElement("a");
-    a.href = link.url || "#" ;
+    a.href = link.url || "#";
     a.target = "_blank";
     a.className = "link-card";
 
@@ -77,21 +89,18 @@ firebase.database().ref("links").on("value", snapshot => {
 
     if (link.icon && link.icon.trim() !== "") {
       const iconText = link.icon.trim();
-
- 
       const img = document.createElement("img");
       img.src = iconText;
       img.alt = link.name || "";
       img.className = "link-icon";
 
       img.onerror = () => {
-        img.remove(); 
+        img.remove();
         const spanIcon = document.createElement("span");
         spanIcon.textContent = iconText;
         spanIcon.className = "link-emoji";
         content.prepend(spanIcon);
       };
-
       content.appendChild(img);
     }
 
@@ -104,10 +113,48 @@ firebase.database().ref("links").on("value", snapshot => {
   });
 });
 
+const sponsorsContainer = document.querySelector(".sponsors");
 
+firebase.database().ref("sponsors").on("value", snapshot => {
+  const data = snapshot.val();
+  sponsorsContainer.innerHTML = "";
+  if (!data) return;
 
+  Object.values(data).forEach(sponsor => {
+    const a = document.createElement("a");
+    a.href = sponsor.url || "#";
+    a.target = "_blank";
+    a.className = "link-card sponsor-card";
+
+    const content = document.createElement("div");
+    content.className = "link-content";
+
+    if (sponsor.icon && sponsor.icon.trim() !== "") {
+      const iconText = sponsor.icon.trim();
+      const img = document.createElement("img");
+      img.src = iconText;
+      img.alt = sponsor.name || "";
+      img.className = "link-icon";
+
+      img.onerror = () => {
+        img.remove();
+        const spanIcon = document.createElement("span");
+        spanIcon.textContent = iconText;
+        spanIcon.className = "link-emoji";
+        content.prepend(spanIcon);
+      };
+      content.appendChild(img);
+    }
+
+    const span = document.createElement("span");
+    span.textContent = sponsor.name || "Sponsor";
+    content.appendChild(span);
+
+    a.appendChild(content);
+    sponsorsContainer.appendChild(a);
+  });
+});
 </script>
-
 
 </body>
 </html>

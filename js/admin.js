@@ -4,11 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   const addLinkBtn = document.getElementById("addLinkBtn");
+  const addSponsorBtn = document.getElementById("addSponsorBtn");
   const adminContainer = document.getElementById("adminLinks");
+  const sponsorContainer = document.getElementById("adminSponsors");
   const adminEmail = document.getElementById("adminEmail");
   const adminPassword = document.getElementById("adminPassword");
 
   let links = [];
+  let sponsors = [];
 
   auth.onAuthStateChanged(user => {
     if (user) {
@@ -24,14 +27,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function attachDbListener() {
     db.ref("links").on("value", snapshot => {
-      const raw = snapshot.val();
-      links = normalizeLinks(raw);
+      links = normalizeLinks(snapshot.val());
       renderAdminLinks();
+    });
+
+    db.ref("sponsors").on("value", snapshot => {
+      sponsors = normalizeLinks(snapshot.val());
+      renderSponsors();
     });
   }
 
   function detachDbListener() {
     db.ref("links").off("value");
+    db.ref("sponsors").off("value");
   }
 
   function normalizeLinks(data) {
@@ -44,7 +52,10 @@ document.addEventListener("DOMContentLoaded", () => {
   loginBtn.addEventListener("click", () => {
     const email = adminEmail.value.trim();
     const pw = adminPassword.value;
-    if (!email || !pw) return document.getElementById("error-text").innerHTML = "Please enter email and password.";
+    if (!email || !pw) {
+      document.getElementById("error-text").innerHTML = "Please enter email and password.";
+      return;
+    }
     auth.signInWithEmailAndPassword(email, pw)
       .catch(err => alert("Login failed: " + err.message));
   });
@@ -54,57 +65,91 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveLinks() {
     const data = {};
     links.forEach((link,i)=>data[i]=link);
-
-    db.ref("links").set(data)
-      .then(()=> console.log("Links saved to Firebase"))
-      .catch(err=>console.error("Save failed:", err));
+    db.ref("links").set(data);
   }
 
-function renderAdminLinks() {
-  adminContainer.innerHTML = "";
-  links.forEach((link, i) => {
-    const div = document.createElement("div");
-    div.className = "admin-link";
-    div.draggable = true;
-    div.dataset.index = i;
+  function saveSponsors() {
+    const data = {};
+    sponsors.forEach((s,i)=>data[i]=s);
+    db.ref("sponsors").set(data);
+  }
 
-    div.innerHTML = `
-      <input class="icon" value="${link.icon || ''}" placeholder="Icon / Image URL">
-      <input class="label" value="${link.name || ''}" placeholder="Label">
-      <input class="url" value="${link.url || ''}" placeholder="URL">
-      <button class="del">❌</button>
-    `;
+  function renderAdminLinks() {
+    adminContainer.innerHTML = "";
+    links.forEach((link, i) => {
+      const div = document.createElement("div");
+      div.className = "admin-link";
+      div.draggable = true;
+      div.dataset.index = i;
 
-    const iconInput = div.querySelector(".icon");
-    const labelInput = div.querySelector(".label");
-    const urlInput = div.querySelector(".url");
-    const delBtn = div.querySelector(".del");
+      div.innerHTML = `
+        <input class="icon" value="${link.icon || ''}" placeholder="Icon / Image URL">
+        <input class="label" value="${link.name || ''}" placeholder="Label">
+        <input class="url" value="${link.url || ''}" placeholder="URL">
+        <button class="del">❌</button>
+      `;
 
-  
-    iconInput.addEventListener("blur", () => updateLink(i, "icon", iconInput.value));
-    labelInput.addEventListener("blur", () => updateLink(i, "name", labelInput.value));
-    urlInput.addEventListener("blur", () => updateLink(i, "url", urlInput.value));
-    delBtn.addEventListener("click", () => deleteLink(i));
+      const iconInput = div.querySelector(".icon");
+      const labelInput = div.querySelector(".label");
+      const urlInput = div.querySelector(".url");
+      const delBtn = div.querySelector(".del");
 
-  
-    div.addEventListener("dragstart", e => {
-      e.dataTransfer.setData("text/plain", i);
-      div.classList.add("dragging");
+      iconInput.addEventListener("blur", () => updateLink(i, "icon", iconInput.value));
+      labelInput.addEventListener("blur", () => updateLink(i, "name", labelInput.value));
+      urlInput.addEventListener("blur", () => updateLink(i, "url", urlInput.value));
+      delBtn.addEventListener("click", () => deleteLink(i));
+
+      div.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("text/plain", i);
+        div.classList.add("dragging");
+      });
+      div.addEventListener("dragend", () => div.classList.remove("dragging"));
+      div.addEventListener("dragover", e => e.preventDefault());
+      div.addEventListener("drop", e => {
+        const fromIndex = Number(e.dataTransfer.getData("text/plain"));
+        const toIndex = Number(div.dataset.index);
+        swapLinks(fromIndex, toIndex);
+        saveLinks();
+      });
+
+      adminContainer.appendChild(div);
     });
-    div.addEventListener("dragend", () => div.classList.remove("dragging"));
-    div.addEventListener("dragover", e => e.preventDefault());
-    div.addEventListener("drop", e => {
-      const fromIndex = Number(e.dataTransfer.getData("text/plain"));
-      const toIndex = Number(div.dataset.index);
-      swapLinks(fromIndex, toIndex);
-      saveLinks();
+  }
+
+  function renderSponsors() {
+    sponsorContainer.innerHTML = "";
+    sponsors.forEach((s, i) => {
+      const div = document.createElement("div");
+      div.className = "admin-link";
+
+      div.innerHTML = `
+        <input class="icon" value="${s.icon || ''}" placeholder="Sponsor Logo URL">
+        <input class="label" value="${s.name || ''}" placeholder="Sponsor Name">
+        <input class="url" value="${s.url || ''}" placeholder="Sponsor URL">
+        <button class="del">❌</button>
+      `;
+
+      div.querySelector(".icon").addEventListener("blur", e => {
+        sponsors[i].icon = e.target.value;
+        saveSponsors();
+      });
+      div.querySelector(".label").addEventListener("blur", e => {
+        sponsors[i].name = e.target.value;
+        saveSponsors();
+      });
+      div.querySelector(".url").addEventListener("blur", e => {
+        sponsors[i].url = e.target.value;
+        saveSponsors();
+      });
+      div.querySelector(".del").addEventListener("click", () => {
+        sponsors.splice(i,1);
+        saveSponsors();
+        renderSponsors();
+      });
+
+      sponsorContainer.appendChild(div);
     });
-
-    adminContainer.appendChild(div);
-  });
-}
-
-
+  }
 
   function updateLink(i,key,value){
     if (!links[i]) return;
@@ -125,7 +170,20 @@ function renderAdminLinks() {
     renderAdminLinks();
   }
 
+  function addLink(){
+    links.push({ icon:"", name:"", url:"" });
+    saveLinks();
+    renderAdminLinks();
+  }
+
+  function addSponsor(){
+    sponsors.push({ icon:"", name:"", url:"" });
+    saveSponsors();
+    renderSponsors();
+  }
+
   addLinkBtn.addEventListener("click", addLink);
+  addSponsorBtn.addEventListener("click", addSponsor);
 });
 
 const home = document.querySelector(".home");

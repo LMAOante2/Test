@@ -4,37 +4,57 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard - Flybrick</title>
+
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
 <link rel="manifest" href="assets/site.webmanifest">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="js/firebase-init.js"></script>
-<link rel="stylesheet" href="css/admin.css">
 </head>
+
 <body>
 
 <div class="admin-panel">
-  <div class="popup"><h3 id="message"></h3> <button class="closebtn" onclick="closepopup()">Close</button></div>
+  <div class="popup">
+    <h3 id="message"></h3>
+    <button class="closebtn" onclick="closepopup()">Close</button>
+  </div>
+
   <h2 class="title">Admin</h2>
+
   <div id="adminLogin" class="admin-controls">
     <input type="email" id="adminEmail" placeholder="Email">
     <hr>
     <input type="password" id="adminPassword" placeholder="Password">
     <hr>
     <button id="loginBtn" class="loginbtn">Login</button>
-    <div id="error"><h2 id="error-title"></h2> <h3 id="error-text"></h3></div>
+    <div id="error">
+      <h2 id="error-title"></h2>
+      <h3 id="error-text"></h3>
+    </div>
   </div>
 
   <div id="adminContent" style="display:none;">
+
+    <!-- LINKS -->
     <div class="admin-controls">
       <button id="addLinkBtn">Add Link</button>
     </div>
-
     <div id="adminLinks" class="admin-links"></div>
+
+    <!-- SPONSORS -->
+    <div class="admin-controls">
+      <button id="addSponsorBtn">Add Sponsor</button>
+    </div>
+    <div id="adminSponsors" class="admin-links"></div>
+
     <button id="logoutBtn">Logout</button>
     <button class="home">Home</button>
   </div>
@@ -43,37 +63,13 @@
 <script src="js/admin.js"></script>
 
 <script>
-function attachAddLinkHandler() {
-  const btn = document.getElementById("addLinkBtn");
-  if (!btn) {
-    setTimeout(attachAddLinkHandler, 300);
-    return;
-  }
 
-  btn.addEventListener("click", () => {
-    const linkId = "link_" + Date.now();
-
-    firebase.database().ref("links/" + linkId).set({
-      name: "New Link",
-      url: "https://example.com",
-      icon: "", 
-      createdAt: firebase.database.ServerValue.TIMESTAMP
-    })
-    .then(() => {
-      document.getElementById("message").innerText = "Link added successfully!";
-      document.querySelector(".popup").classList.add("show");
-    })
-    .catch(err => {
-      alert("Error");
-    });
-  });
+function closepopup() {
+  document.querySelector(".popup").classList.remove("show");
 }
 
 attachAddLinkHandler();
-
-closepopup = () => {
-  document.querySelector(".popup").classList.remove("show");
-}
+attachAddSponsorHandler();
 </script>
 
 </body>
