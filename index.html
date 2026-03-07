@@ -7,7 +7,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
+
+    <div id="ptr-container">
+  <div class="ptr-spinner"></div>
+</div>
 <body>
+
     <div id="app">
         <div id="login-screen">
             <h1>Login</h1>
@@ -42,18 +47,16 @@
             </div>
         </div>
 
-                <div id="settings-screen" style="display: none;">
-            <button class="logoutbtn" onclick="logout()"> Logout</button>
-            <div id="device-list"></div>
-            <div id="add-device-modal" style="display: none;">
-                <h2>Add Device</h2>
-                <input type="text" id="home-ssid" placeholder="Home WiFi SSID">
-
-                <input type="text" id="device-name" placeholder="Device Name (optional)">
-                <button onclick="addDevice()">Submit</button>
-                <button onclick="hideAddDeviceForm()">Cancel</button>
-                <p id="add-error"></p>
+        <div id="settings-screen" style="display: none;">
+            <div class="units">
+                <input style="display: none;" checked type="checkbox" id="celsius">
+                <input style="display: none;" type="checkbox" id="fahrenheit">
+                <p>°C</p><label for="celsius" class="icon"><span class="box"><i class="fa-solid fa-check check" ></i></span></label>
+                <p>°F</p> <label for="fahrenheit" class="icon1"><span class="box1"><i class="fa-solid fa-check check1"></i></span></label>
             </div>
+                <button class="logoutbtn" onclick="logout()"> Logout</button>
+            
+        </div>
         </div>
         
     </div>

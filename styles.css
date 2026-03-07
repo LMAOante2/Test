@@ -17,6 +17,7 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
+    transition: all 0.3s ease;
 }
 
 #info-screen {
@@ -24,6 +25,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    transition: all 0.3s ease;
 }
 
 .footer {
@@ -37,6 +39,7 @@ body {
     flex-direction: row;
     text-align: center;
     place-content: center;
+    transition: all 0.3s ease;
 }
 
 .footer button {
@@ -125,6 +128,7 @@ h2 {
 .device-item:hover {
     background: #0066ff;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 
@@ -140,6 +144,7 @@ h2 {
     z-index: 10;
     width: 100%;
     height: 100%;
+    transition: all 0.3s ease;
 }
 
 .password-container {
@@ -196,6 +201,60 @@ h2 {
     font-weight: bold;
 }
 
+.units {
+    display: flex;
+    place-content: center;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.units label {
+    position: relative;
+    width: 100px;
+    height: 20px;
+    color: white;
+    place-content: center;
+    align-items: center;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+.box,
+.box1 {
+    position: absolute;
+    margin-left: 0px;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border: 2px solid white;
+    place-content: center;
+    align-items: center;
+    text-align: center;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+
+.check,
+.check1 {
+    opacity: 0;
+    display: flex;
+    transition: all 0.3s ease;
+    place-self: center;
+    color: white;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+#fahrenheit:checked~.icon1 .box1 .check1 {
+    opacity: 1;
+}
+
+#celsius:checked~.icon .box .check {
+    opacity: 1;
+}
 
 p {
     color: white;
@@ -245,4 +304,46 @@ p {
     color: rgb(163, 163, 163);
     transform: rotate(90deg);
 
+}
+
+#login-screen,
+#main-screen,
+#settings-screen,
+#info-screen,
+#add-device-modal,
+#footer,
+#addevicebtn {
+    transition: all 0.3s ease;
+}
+
+#ptr-container {
+    position: fixed;
+    top: -80px;
+    left: 0;
+    right: 0;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000000000000000000000000;
+    transition: top 0.2s ease;
+}
+
+.ptr-spinner {
+    width: 26px;
+    height: 26px;
+    border: 3px solid #444;
+    border-top: 3px solid #00ffcc;
+    border-radius: 50%;
+    animation: ptr-spin 1s linear infinite;
+}
+
+@keyframes ptr-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
