@@ -1,0 +1,248 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: linear-gradient(to bottom, rgb(11, 157, 255), rgb(11, 48, 255), rgb(27, 0, 70));
+}
+
+#app {
+    left: 0;
+    top: 20px;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#info-screen {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    background: rgb(27, 0, 70);
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+    place-content: center;
+}
+
+.footer button {
+    position: relative;
+    top: 5px;
+    width: 30px;
+    text-align: center;
+    margin: 0 10px;
+    background: none;
+    height: 30px;
+    place-content: center;
+    background: black;
+    align-items: center;
+    display: flex;
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+    background: linear-gradient(to bottom, rgb(11, 157, 255), rgb(11, 48, 255), rgb(27, 0, 70));
+}
+
+::-webkit-scrollbar-thumb {
+    width: 5px;
+    background: linear-gradient(to bottom, rgb(11, 157, 255));
+}
+
+.footer button:hover {
+    background: none;
+}
+
+.footer button:hover .footeri {
+    border: 0.5px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.active .footeri {
+    border: 0.5px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.footeri {
+    border: 0.5px solid white;
+    padding: 10px;
+    background: #007bff;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+input,
+button {
+    display: block;
+    width: 80%;
+    place-self: center;
+    margin: 10px 0;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+h1,
+h2 {
+    text-align: center;
+    color: white;
+}
+
+.device-item {
+    background: #025adf;
+    color: white;
+    padding: 10px;
+    margin: 10px 0;
+    text-align: center;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.device-item:hover {
+    background: #0066ff;
+    cursor: pointer;
+}
+
+
+
+#add-device-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(to bottom, rgb(11, 157, 255), rgb(11, 48, 255), rgb(27, 0, 70));
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+}
+
+.password-container {
+    display: flex;
+    place-content: center;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    width: 100%;
+    position: relative;
+}
+
+.password-container input {
+    padding-right: 30px;
+}
+
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 150px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #000;
+    font-size: 18px;
+}
+
+@media screen and (max-width: 430px) {
+    .toggle-password {
+        right: 50px;
+    }
+}
+
+#add-device-modal input {
+    position: relative;
+    text-align: center;
+    border: none;
+}
+
+.logoutbtn {
+    position: fixed;
+    bottom: 30px;
+    transform: translateY(-50%);
+}
+
+#add-device-modal input:active,
+#add-device-modal input:focus {
+    border: none;
+    outline: none;
+}
+
+#add-error {
+    color: rgb(219, 12, 12);
+    text-align: center;
+    font-weight: bold;
+}
+
+
+p {
+    color: white;
+}
+
+.adddevicebtn {
+    position: fixed;
+    top: 0px;
+    background: none;
+    width: 30px;
+    right: 20px;
+}
+
+.adddevicebtn:hover {
+    background: none;
+}
+
+.back {
+    position: fixed;
+    width: 30px;
+    left: 20px;
+    top: 0px;
+    background: none;
+}
+
+.back:hover {
+    background: none;
+}
+
+.backicon {
+    color: rgb(0, 0, 0);
+    transition: all 0.3s ease;
+    font-size: 20px;
+}
+
+.back:hover .backicon {
+    color: rgb(163, 163, 163);
+}
+
+.addicon {
+    color: rgb(0, 0, 0);
+    transition: all 0.3s ease;
+    font-size: 20px;
+}
+
+.adddevicebtn:hover .addicon {
+    color: rgb(163, 163, 163);
+    transform: rotate(90deg);
+
+}

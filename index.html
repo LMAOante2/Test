@@ -1,175 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Flybrick_S60r</title>
-
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
-  <link rel="manifest" href="assets/site.webmanifest">
-  <link rel="stylesheet" href="css/themes.css">
-  <script src="https://kit.fontawesome.com/ecbdcf2a50.js" crossorigin="anonymous"></script>
-
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devices</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
-
-<body class="theme-dark">
-
-<div class="custom-select-wrapper">
-  <button class="custom-select-btn" aria-label="Select Theme">
-    Dark <span class="arrow">▼</span>
-  </button>
-  <ul class="custom-options">
-    <li data-value="theme-light">Light</li>
-    <li data-value="theme-dark">Dark</li>
-    <li data-value="theme-neon">Neon</li>
-  </ul>
+<body>
+    <div id="app">
+        <div id="login-screen">
+            <h1>Login</h1>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <button onclick="signup()">Sign Up</button>
+            <p id="auth-error"></p>
+        </div>
+        <div id="info-screen" style="display: none;">
+    <h2 id="info-device-name"></h2>
+    <p id="info-sensor"></p>
+    <div id="control-section" style="display: none;">
+        <button id="toggle-button">Toggle</button>
+    </div>
+    <button class="back" onclick="showMainScreen()"><i class="fa-solid fa-arrow-left backicon" ></i></button>
 </div>
 
+        <div id="main-screen" style="display: none;">
+            <div id="device-list"></div>
+            <div id="add-device-modal" style="display: none;">
+                <h2>Add Device</h2>
+                <input type="text" id="home-ssid" placeholder="Home WiFi SSID">
+                <div class="password-container">
+                <input type="password" id="home-password" placeholder="Home WiFi Password">
+                <i class="fa-solid fa-eye toggle-password"></i>
+                </div>
+                <input type="text" id="device-name" placeholder="Device Name (optional)">
+                <button onclick="addDevice()">Submit</button>
+                <button onclick="hideAddDeviceForm()">Cancel</button>
+                <p id="add-error"></p>
+            </div>
+        </div>
 
+                <div id="settings-screen" style="display: none;">
+            <button class="logoutbtn" onclick="logout()"> Logout</button>
+            <div id="device-list"></div>
+            <div id="add-device-modal" style="display: none;">
+                <h2>Add Device</h2>
+                <input type="text" id="home-ssid" placeholder="Home WiFi SSID">
 
-  <header class="profile">
-    <img oncontextmenu="return false" draggable="false" src="assets/logo.png" alt="Flybrick Logo">
-    <h1>Flybrick_S60r</h1>
-    <p>YouTuber • Gamer • Creator</p>
-  </header>
-
-  <section class="card video-card">
-    <div class="video-header">
-      <h2>Latest Video</h2>
-      <span id="newBadge" class="badge" hidden>NEW</span>
-      <span id="liveBadge" class="badge live" hidden>LIVE</span>
+                <input type="text" id="device-name" placeholder="Device Name (optional)">
+                <button onclick="addDevice()">Submit</button>
+                <button onclick="hideAddDeviceForm()">Cancel</button>
+                <p id="add-error"></p>
+            </div>
+        </div>
+        
     </div>
+    
+    
 
-    <div class="video-wrapper">
-      <img id="videoThumb" class="thumbnail" hidden>
-      <iframe id="latestVideo" loading="lazy" allowfullscreen></iframe>
-    </div>
+    <button onclick="showAddDeviceForm()" class="adddevicebtn" id="addevicebtn"><i class="fa-solid fa-plus addicon"></i></button>
+    <footer id="footer" class="footer">
+        <button id="homebtn" onclick="showMainScreen()"><i class="fa-solid fa-house footeri"></i></button>
+        <button id="settingsbtn" onclick="settings()"><i class="fa-solid fa-gear footeri"></i></button>
+    </footer>
 
-    <h3 id="videoTitle"></h3>
-    <p id="videoMeta"></p>
-    <p id="videoFallback" hidden>No long video available.</p>
-  </section>
-
-  <section draggable="false" loading="lazy" class="card">
-    <section class="links" draggable="false"></section>
-  </section>
-
-  <section draggable="false" loading="lazy" class="card">
-    <h2>Sponsors</h2><section class="sponsors" draggable="false"></section>
-  </section>
-
-  <section class="card">
-    <h2>Latest Shorts</h2>
-    <div id="shortsGrid" class="shorts-grid"></div>
-  </section>
-
-  <footer>
-    <p>© 2025 Flybrick_S60r</p>
-    <a target="_blank" class="social" draggable="false" href="https://www.youtube.com/@Flybrick_S60R"><i class="fa-brands fa-youtube" style="color: #ff0000;"></i></a>
-    <a target="_blank" class="social" draggable="false" href="https://www.instagram.com/flybrick_s60r"><i class="fa-brands fa-instagram" style="color: #ff0088;"></i></a>
-    <a target="_blank" class="social" draggable="false" href="https://www.twitch.tv/flybrick_s60r"><i class="fa-brands fa-twitch" style="color: #B197FC;"></i></a>
-    <a target="_blank" class="social" draggable="false" href="https://www.tiktok.com/@flybrick_s60r?ug_source=op.auth&ug_term=Linktr.ee&utm_source=awyc6vc625ejxp86&utm_campaign=tt4d_profile_link&_r=1"><i class="fa-brands fa-tiktok"></i></a>
-    <a target="_blank" class="social" draggable="false" href="https://www.facebook.com/profile.php?id=100093144267320"><i class="fa-brands fa-facebook" style="color: #0400ff;"></i></a>
-    <a target="_blank" class="social" draggable="false" href="https://discord.com/invite/MfTswQaw5E"><i class="fa-brands fa-discord" style="color: #B197FC;"></i></a>
-    <a target="_blank" class="social" draggable="false" href="https://github.com/FlybrickS60R/Volvo-Cluster"><i class="fa-brands fa-github"></i></a>
-  </footer>
-
-  <script src="js/firebase-init.js"></script>
-  <script src="js/theme.js"></script>
-  <script src="js/public-links.js"></script>
-  <script src="js/youtube.js"></script>
-
-<script>
-
-const linksContainer = document.querySelector(".links");
-
-firebase.database().ref("links").on("value", snapshot => {
-  const data = snapshot.val();
-  linksContainer.innerHTML = "";
-  if (!data) return;
-
-  Object.values(data).forEach(link => {
-    const a = document.createElement("a");
-    a.href = link.url || "#";
-    a.target = "_blank";
-    a.className = "link-card";
-
-    const content = document.createElement("div");
-    content.className = "link-content";
-
-    if (link.icon && link.icon.trim() !== "") {
-      const iconText = link.icon.trim();
-      const img = document.createElement("img");
-      img.src = iconText;
-      img.alt = link.name || "";
-      img.className = "link-icon";
-
-      img.onerror = () => {
-        img.remove();
-        const spanIcon = document.createElement("span");
-        spanIcon.textContent = iconText;
-        spanIcon.className = "link-emoji";
-        content.prepend(spanIcon);
-      };
-      content.appendChild(img);
-    }
-
-    const span = document.createElement("span");
-    span.textContent = link.name || "Link";
-    content.appendChild(span);
-
-    a.appendChild(content);
-    linksContainer.appendChild(a);
-  });
-});
-
-const sponsorsContainer = document.querySelector(".sponsors");
-
-firebase.database().ref("sponsors").on("value", snapshot => {
-  const data = snapshot.val();
-  sponsorsContainer.innerHTML = "";
-  if (!data) return;
-
-  Object.values(data).forEach(sponsor => {
-    const a = document.createElement("a");
-    a.href = sponsor.url || "#";
-    a.target = "_blank";
-    a.className = "link-card sponsor-card";
-
-    const content = document.createElement("div");
-    content.className = "link-content";
-
-    if (sponsor.icon && sponsor.icon.trim() !== "") {
-      const iconText = sponsor.icon.trim();
-      const img = document.createElement("img");
-      img.src = iconText;
-      img.alt = sponsor.name || "";
-      img.className = "link-icon";
-
-      img.onerror = () => {
-        img.remove();
-        const spanIcon = document.createElement("span");
-        spanIcon.textContent = iconText;
-        spanIcon.className = "link-emoji";
-        content.prepend(spanIcon);
-      };
-      content.appendChild(img);
-    }
-
-    const span = document.createElement("span");
-    span.textContent = sponsor.name || "Sponsor";
-    content.appendChild(span);
-
-    a.appendChild(content);
-    sponsorsContainer.appendChild(a);
-  });
-});
-</script>
-
+    <script type="module" src="firebase.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
