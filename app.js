@@ -600,30 +600,111 @@ function loadProfileImage() {
     });
 }
 
+const cropModal = document.getElementById('crop-modal');
+const cropImg = document.getElementById('crop-img');
+const cropBtn = document.getElementById('crop-btn');
+const cancelCrop = document.getElementById('cancel-crop');
+
+let currentURL = null;
+let isDragging = false;
+let startX, startY, startLeft, startTop;
+
+function initDrag(e) {
+    isDragging = true;
+    startX = e.clientX || e.touches[0].clientX;
+    startY = e.clientY || e.touches[0].clientY;
+    startLeft = parseFloat(cropImg.style.left) || 0;
+    startTop = parseFloat(cropImg.style.top) || 0;
+}
+
+function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    const clientX = e.clientX || e.touches[0].clientX;
+    const clientY = e.clientY || e.touches[0].clientY;
+    let dx = clientX - startX;
+    let dy = clientY - startY;
+    let newLeft = startLeft + dx;
+    let newTop = startTop + dy;
+    const containerSize = 200;
+    const imgWidth = cropImg.width;
+    const imgHeight = cropImg.height;
+    newLeft = Math.min(0, Math.max(newLeft, containerSize - imgWidth));
+    newTop = Math.min(0, Math.max(newTop, containerSize - imgHeight));
+    cropImg.style.left = newLeft + 'px';
+    cropImg.style.top = newTop + 'px';
+}
+
+function endDrag() {
+    isDragging = false;
+}
+
+cropImg.addEventListener('mousedown', initDrag);
+cropImg.addEventListener('touchstart', initDrag, {passive: false});
+document.addEventListener('mousemove', drag);
+document.addEventListener('touchmove', drag, {passive: false});
+document.addEventListener('mouseup', endDrag);
+document.addEventListener('touchend', endDrag);
+
 profileInput.addEventListener('change', () => {
     const file = profileInput.files[0];
-    if (!file) {
-        profileError.innerText = "Please select an image.";
-        return;
-    }
-
-    profileError.innerText = "";
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const base64String = e.target.result;
-        const userId = auth.currentUser.uid;
-
-        try {
-            await set(ref(db, `users/${userId}/profileImage`), base64String);
-            profilePreview.src = base64String;
-            profileError.innerText = "Profile image uploaded successfully!";
-        } catch (err) {
-            profileError.innerText = "Failed to upload: " + err.message;
-        }
+    if (!file) return;
+    if (currentURL) URL.revokeObjectURL(currentURL);
+    currentURL = URL.createObjectURL(file);
+    cropImg.src = currentURL;
+    cropImg.onload = () => {
+        const containerSize = 200;
+        const imgW = cropImg.naturalWidth;
+        const imgH = cropImg.naturalHeight;
+        const scale = Math.max(containerSize / imgW, containerSize / imgH);
+        const scaledW = imgW * scale;
+        const scaledH = imgH * scale;
+        cropImg.style.width = scaledW + 'px';
+        cropImg.style.height = scaledH + 'px';
+        cropImg.style.left = - (scaledW - containerSize) / 2 + 'px';
+        cropImg.style.top = - (scaledH - containerSize) / 2 + 'px';
     };
+    showElement('crop-modal');
+});
 
-    reader.readAsDataURL(file);
+cropBtn.addEventListener('click', async () => {
+    const containerSize = 200;
+    const left = parseFloat(cropImg.style.left);
+    const top = parseFloat(cropImg.style.top);
+    const imgWidth = cropImg.width;
+    const imgHeight = cropImg.height;
+    const scale = imgWidth / cropImg.naturalWidth;
+    const sx = -left / scale;
+    const sy = -top / scale;
+    const sw = containerSize / scale;
+    const sh = containerSize / scale;
+    const canvas = document.createElement('canvas');
+    canvas.width = containerSize;
+    canvas.height = containerSize;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(cropImg, sx, sy, sw, sh, 0, 0, containerSize, containerSize);
+    const base64 = canvas.toDataURL('image/png');
+    const userId = auth.currentUser.uid;
+    try {
+        await set(ref(db, `users/${userId}/profileImage`), base64);
+        profilePreview.src = base64;
+        profileError.innerText = "Profile image uploaded successfully!";
+    } catch (err) {
+        profileError.innerText = "Failed to upload: " + err.message;
+    }
+    hideElement('crop-modal');
+    URL.revokeObjectURL(currentURL);
+    currentURL = null;
+    profileInput.value = '';
+});
+
+cancelCrop.addEventListener('click', () => {
+    hideElement('crop-modal');
+    if (currentURL) {
+        URL.revokeObjectURL(currentURL);
+        currentURL = null;
+    }
+    profileInput.value = '';
 });
 
 auth.onAuthStateChanged(user => {
