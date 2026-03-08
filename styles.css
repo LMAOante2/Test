@@ -184,9 +184,9 @@ h2 {
 }
 
 .logoutbtn {
-    position: fixed;
-    bottom: 30px;
-    transform: translateY(-50%);
+    display: block;
+    width: 80%;
+    margin: 20px auto;
 }
 
 #add-device-modal input:active,
@@ -349,12 +349,54 @@ p {
 }
 
 #profile-img-preview {
-    position: fixed;
-    right: 10px;
-    top: 10px;
-    width: 50px;
-    height: 50px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     display: block;
-    margin: 10px auto;
+    margin: 20px auto;
+}
+
+.settings-section {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.settings-section h3 {
+    color: white;
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+.profile-image-container {
+    position: relative;
+    width: fit-content;
+    margin: auto;
+}
+
+.upload-label {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-label:hover {
+    background: #0056b3;
+}
+
+#settings-screen {
+    padding: 20px;
+}
+
+#settings-screen h2 {
+    margin-bottom: 20px;
 }

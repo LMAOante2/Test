@@ -583,7 +583,6 @@ function refresh() {
 
 const profileInput = document.getElementById('profile-img-input');
 const profilePreview = document.getElementById('profile-img-preview');
-const uploadProfileBtn = document.getElementById('upload-profile-btn');
 const profileError = document.getElementById('profile-error');
 
 function loadProfileImage() {
@@ -601,7 +600,7 @@ function loadProfileImage() {
     });
 }
 
-uploadProfileBtn.addEventListener('click', () => {
+profileInput.addEventListener('change', () => {
     const file = profileInput.files[0];
     if (!file) {
         profileError.innerText = "Please select an image.";
