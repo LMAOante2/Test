@@ -563,7 +563,8 @@ document.addEventListener('touchend', () => {
     ptr.style.top = '0px';
 
 
-    refresh();
+      refresh();
+      loadProfileImage()
 
     setTimeout(() => {
       ptr.style.top = '-80px';
