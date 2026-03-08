@@ -1,4 +1,13 @@
-import { auth, db, signInWithEmailAndPassword, createUserWithEmailAndPassword, ref, set, onValue, get } from './firebase.js';
+import {
+  auth,
+  db,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  ref,
+  set,
+  onValue,
+  get
+} from './firebase.js';
 
 const ESP_IP = '192.168.4.1';
 
@@ -6,7 +15,7 @@ const celsius = document.getElementById("celsius");
 const fahrenheit = document.getElementById("fahrenheit");
 
 function convertTemperature(tempC) {
-    if (fahrenheit.checked) {
+    if (fahrenheit && fahrenheit.checked) {
         return {
             value: (tempC * 9/5) + 32,
             unit: "°F"
@@ -21,32 +30,38 @@ function convertTemperature(tempC) {
 function vibrate() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
         window.Capacitor.Plugins.Haptics.impact({ style: 'MEDIUM' });
+    } else if (navigator.vibrate) {
+        navigator.vibrate(50);
     }
 }
 
 const savedUnit = localStorage.getItem("tempUnit");
 
 if (savedUnit === "fahrenheit") {
-    fahrenheit.checked = true;
-    celsius.checked = false;
+    if (fahrenheit) fahrenheit.checked = true;
+    if (celsius) celsius.checked = false;
 } else {
-    celsius.checked = true;
-    fahrenheit.checked = false;
+    if (celsius) celsius.checked = true;
+    if (fahrenheit) fahrenheit.checked = false;
 }
 
-celsius.addEventListener("change", () => {
-    if (celsius.checked) {
-        fahrenheit.checked = false;
-        localStorage.setItem("tempUnit", "celsius");
-    }
-});
+if (celsius) {
+  celsius.addEventListener("change", () => {
+      if (celsius.checked) {
+          if (fahrenheit) fahrenheit.checked = false;
+          localStorage.setItem("tempUnit", "celsius");
+      }
+  });
+}
 
-fahrenheit.addEventListener("change", () => {
-    if (fahrenheit.checked) {
-        celsius.checked = false;
-        localStorage.setItem("tempUnit", "fahrenheit");
-    }
-});
+if (fahrenheit) {
+  fahrenheit.addEventListener("change", () => {
+      if (fahrenheit.checked) {
+          if (celsius) celsius.checked = false;
+          localStorage.setItem("tempUnit", "fahrenheit");
+      }
+  });
+}
 
 const transitionTime = 300;
 
@@ -83,11 +98,14 @@ function showMainScreen() {
     hideElement('info-screen');
     showElement('addevicebtn');
     showElement('footer', 'flex');
-    document.getElementById('homebtn').classList.add("active");
-    document.getElementById('settingsbtn').classList.remove("active");
+    const homeBtn = document.getElementById('homebtn');
+    const settingsBtn = document.getElementById('settingsbtn');
+    if (homeBtn) homeBtn.classList.add("active");
+    if (settingsBtn) settingsBtn.classList.remove("active");
+
     if (infoInterval) clearInterval(infoInterval);
     infoInterval = null;
-    for (let unsub of infoUnsubscribes) unsub();
+    for (let unsub of infoUnsubscribes) if (typeof unsub === 'function') unsub();
     infoUnsubscribes = [];
     loadDevices();
 }
@@ -98,12 +116,14 @@ function settings() {
     hideElement('main-screen');
     hideElement('info-screen');
     hideElement('addevicebtn');
-    document.getElementById('homebtn').classList.remove("active");
+    const homeBtn = document.getElementById('homebtn');
+    const settingsBtn = document.getElementById('settingsbtn');
+    if (homeBtn) homeBtn.classList.remove("active");
     showElement('footer', 'flex');
-    document.getElementById('settingsbtn').classList.add("active");
+    if (settingsBtn) settingsBtn.classList.add("active");
     if (infoInterval) clearInterval(infoInterval);
     infoInterval = null;
-    for (let unsub of infoUnsubscribes) unsub();
+    for (let unsub of infoUnsubscribes) if (typeof unsub === 'function') unsub();
     infoUnsubscribes = [];
 }
 
@@ -124,7 +144,7 @@ function updateDeviceStatus(deviceId) {
 
     const isControllable = deviceIsControllable.get(deviceId);
     if (isControllable) {
-        const state = controlStates.get(deviceId) || false;
+        const state = !!controlStates.get(deviceId);
         const ls = controlLastSeens.get(deviceId);
         const online = typeof ls === "number" && (Date.now() / 1000 - ls) < offlineThreshold;
         if (!online) {
@@ -137,16 +157,16 @@ function updateDeviceStatus(deviceId) {
         }
     } else {
         const sensorData = sensorDatas.get(deviceId);
-        if (
-    sensorData &&
-    typeof sensorData.timestamp === "number" &&
-    (Date.now() / 1000 - sensorData.timestamp) < offlineThreshold
-)
- {
-            const temp = convertTemperature(sensorData.temperature);
-            const tempColor = sensorData.temperature >= 23 ? "rgb(219, 12, 12)" : "white";
+        if (sensorData && typeof sensorData.timestamp === "number" && (Date.now() / 1000 - sensorData.timestamp) < offlineThreshold) {
+            const temp = convertTemperature(Number(sensorData.temperature ?? 0));
+            const tempColor = (Number(sensorData.temperature) >= 23) ? "rgb(219, 12, 12)" : "white";
             let humidityColor = "white";
-            if (sensorData.humidity >= 60 || sensorData.humidity <= 20) humidityColor = "blue";
+            if (Number(sensorData.humidity) >= 60 || Number(sensorData.humidity) <= 20) humidityColor = "blue";
+
+            statusP.innerHTML = `
+                Temp: <span style="color:${tempColor}; font-weight:bold; font-size:16px;">${temp.value.toFixed(2)}${temp.unit}</span><br>
+                Hum: <span style="color:${humidityColor}; font-weight:bold; font-size:16px;">${Number(sensorData.humidity).toFixed(2)}%</span>
+            `;
             statusP.style.color = 'white';
         } else {
             statusP.innerHTML = 'Offline';
@@ -156,28 +176,42 @@ function updateDeviceStatus(deviceId) {
 }
 
 function showDeviceInfo(deviceId, deviceName, mac, controllable) {
+    setCurrentDevice(deviceId);
     hideElement('main-screen');
     hideElement('settings-screen');
     showElement('info-screen');
     hideElement('addevicebtn');
     hideElement('footer');
 
-    document.getElementById('info-device-name').innerHTML = `${deviceName} (${mac}) <i class="fa-solid fa-pencil rename-icon" style="cursor: pointer; margin-left: 10px;" onclick="renameDevice('${deviceId}','${deviceName}','${mac}')"></i>`;
+    const infoDeviceNameEl = document.getElementById('info-device-name');
+    if (infoDeviceNameEl) {
+      infoDeviceNameEl.innerHTML = `${deviceName} (${mac}) <i class="fa-solid fa-pencil rename-icon" style="cursor: pointer; margin-left: 10px;" onclick="renameDevice('${deviceId}','${deviceName}','${mac}')"></i>`;
+    }
+
+    const imgRef = ref(db, `devices/${deviceId}/image`);
+
+get(imgRef).then(snapshot => {
+    if (snapshot.exists()) {
+        deviceImgPreview.src = snapshot.val();
+    }
+});
+
 
     const sensorP = document.getElementById('info-sensor');
     const controlDiv = document.getElementById('control-section');
 
-    for (let unsub of infoUnsubscribes) unsub();
+    for (let unsub of infoUnsubscribes) if (typeof unsub === 'function') unsub();
     infoUnsubscribes = [];
     if (infoInterval) clearInterval(infoInterval);
     infoInterval = null;
 
     if (controllable) {
-        sensorP.style.display = 'none';
-        controlDiv.style.display = 'block';
+        if (sensorP) sensorP.style.display = 'none';
+        if (controlDiv) controlDiv.style.display = 'block';
         const stateRef = ref(db, `devices/${deviceId}/control/state`);
         const lastSeenRef = ref(db, `devices/${deviceId}/control/lastSeen`);
         const toggleBtn = document.getElementById('toggle-button');
+        if (!toggleBtn) return;
 
         let currentState = false;
         let currentLastSeen = undefined;
@@ -194,31 +228,31 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
         };
 
         const stateUnsub = onValue(stateRef, (stateSnap) => {
-            currentState = stateSnap.val() || false;
+            currentState = !!stateSnap.val();
+            controlStates.set(deviceId, currentState);
             updateButton();
+            updateDeviceStatus(deviceId);
         });
         infoUnsubscribes.push(stateUnsub);
 
-const lastSeenUnsub = onValue(lastSeenRef, (snap) => {
-    const val = snap.val();
+        const lastSeenUnsub = onValue(lastSeenRef, (snap) => {
+            const val = snap.val();
+            currentLastSeen = val;
+            controlLastSeens.set(deviceId, val);
 
-    currentLastSeen = val;  
-    controlLastSeens.set(deviceId, val);
-
-    currentOnline = typeof val === "number" && (Date.now()/1000 - val) < offlineThreshold;
-
-    updateDeviceStatus(deviceId);
-    updateButton();
-});
-
-
+            currentOnline = typeof val === "number" && (Date.now()/1000 - val) < offlineThreshold;
+            updateDeviceStatus(deviceId);
+            updateButton();
+        });
         infoUnsubscribes.push(lastSeenUnsub);
 
         toggleBtn.onclick = () => {
             if (!currentOnline) return;
             get(stateRef).then((snap) => {
-                const current = snap.val();
+                const current = !!snap.val();
                 set(stateRef, !current);
+            }).catch(err => {
+                console.error("Failed to toggle:", err);
             });
         };
 
@@ -229,38 +263,41 @@ const lastSeenUnsub = onValue(lastSeenRef, (snap) => {
             }
         }, 60000);
     } else {
-        sensorP.style.display = 'block';
-        controlDiv.style.display = 'none';
+        if (sensorP) sensorP.style.display = 'block';
+        if (controlDiv) controlDiv.style.display = 'none';
         const dataRef = ref(db, `devices/${deviceId}/sensor`);
 
         let currentSensorData = null;
 
         const updateInfo = () => {
+            if (!sensorP) return;
             if (currentSensorData && (Date.now() / 1000 - currentSensorData.timestamp < offlineThreshold)) {
-                const temp = convertTemperature(currentSensorData.temperature);
-                const tempColor = currentSensorData.temperature >= 23 ? "rgb(219, 12, 12)" : "white";
+                const temp = convertTemperature(Number(currentSensorData.temperature ?? 0));
+                const tempColor = (Number(currentSensorData.temperature) >= 23) ? "rgb(219, 12, 12)" : "white";
 
                 let humidityColor = "white";
-                if (currentSensorData.humidity >= 60 || currentSensorData.humidity <= 20) humidityColor = "blue";
+                if (Number(currentSensorData.humidity) >= 60 || Number(currentSensorData.humidity) <= 20) humidityColor = "blue";
 
                 sensorP.innerHTML = `
                     Temp: <span style="color:${tempColor}; font-weight:bold; font-size:16px;">
                     ${temp.value.toFixed(2)}${temp.unit}</span><br>
 
                     Hum: <span style="color:${humidityColor}; font-weight:bold; font-size:16px;">
-                    ${currentSensorData.humidity.toFixed(2)}%</span><br>
+                    ${Number(currentSensorData.humidity).toFixed(2)}%</span><br>
 
                     Last: ${new Date(currentSensorData.timestamp * 1000).toLocaleString()}
                 `;
             } else {
                 sensorP.innerHTML = 'Offline';
-                statusP.style.color = 'red';
+                sensorP.style.color = 'red';
             }
         };
 
         const dataUnsub = onValue(dataRef, (dataSnapshot) => {
             currentSensorData = dataSnapshot.val();
+            sensorDatas.set(deviceId, currentSensorData);
             updateInfo();
+            updateDeviceStatus(deviceId);
         });
         infoUnsubscribes.push(dataUnsub);
 
@@ -273,10 +310,19 @@ const lastSeenUnsub = onValue(lastSeenRef, (snap) => {
 function renameDevice(deviceId, currentName, mac) {
     const newName = prompt("Enter new device name:", currentName);
     if (newName && newName.trim() !== "") {
-        const userId = auth.currentUser.uid;
+        const user = auth.currentUser;
+        if (!user) {
+            alert("No authenticated user.");
+            return;
+        }
+        const userId = user.uid;
         set(ref(db, `users/${userId}/devices/${deviceId}/name`), newName)
             .then(() => {
-                document.getElementById('info-device-name').innerHTML = `${newName} (${mac}) <i class="fa-solid fa-pencil rename-icon" style="cursor: pointer; margin-left: 10px;" onclick="renameDevice('${deviceId}','${newName}','${mac}')"></i>`;
+                const infoDeviceNameEl = document.getElementById('info-device-name');
+                if (infoDeviceNameEl) {
+                    infoDeviceNameEl.innerHTML = `${newName} (${mac}) <i class="fa-solid fa-pencil rename-icon" style="cursor: pointer; margin-left: 10px;" onclick="renameDevice('${deviceId}','${newName}','${mac}')"></i>`;
+                }
+                loadDevices();
             })
             .catch(error => {
                 alert("Error renaming device: " + error.message);
@@ -285,24 +331,30 @@ function renameDevice(deviceId, currentName, mac) {
 }
 
 function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const emailEl = document.getElementById('email');
+    const passEl = document.getElementById('password');
+    const email = emailEl ? emailEl.value : '';
+    const password = passEl ? passEl.value : '';
 
     signInWithEmailAndPassword(auth, email, password)
         .then(() => showMainScreen())
         .catch((error) => {
-            document.getElementById('auth-error').innerText = error.message;
+            const errEl = document.getElementById('auth-error');
+            if (errEl) errEl.innerText = error.message;
         });
 }
 
 function signup() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const emailEl = document.getElementById('email');
+    const passEl = document.getElementById('password');
+    const email = emailEl ? emailEl.value : '';
+    const password = passEl ? passEl.value : '';
 
     createUserWithEmailAndPassword(auth, email, password)
         .then(() => showMainScreen())
         .catch((error) => {
-            document.getElementById('auth-error').innerText = error.message;
+            const errEl = document.getElementById('auth-error');
+            if (errEl) errEl.innerText = error.message;
         });
 }
 
@@ -315,12 +367,15 @@ function hideAddDeviceForm() {
 }
 
 async function addDevice() {
-    const homeSSID = document.getElementById('home-ssid').value;
-    const homePassword = document.getElementById('home-password').value;
-    const deviceName = document.getElementById('device-name').value || 'My Device';
+    const homeSSIDEl = document.getElementById('home-ssid');
+    const homePasswordEl = document.getElementById('home-password');
+    const deviceNameEl = document.getElementById('device-name');
+
+    const homeSSID = homeSSIDEl ? homeSSIDEl.value : '';
+    const homePassword = homePasswordEl ? homePasswordEl.value : '';
+    const deviceName = (deviceNameEl && deviceNameEl.value) ? deviceNameEl.value : 'My Device';
 
     try {
-
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 3000);
 
@@ -331,14 +386,12 @@ async function addDevice() {
         clearTimeout(timeout);
 
         if (!response.ok) {
-            const sensorP = document.getElementById('info-sensor');
-            if (sensorP) sensorP.innerText = 'Offline';
-            throw new Error('Failed to fetch data');
+            throw new Error('Failed to fetch data from device');
         }
 
         const data = await response.json();
         const deviceId = data.mac.replace(/:/g, '');
-        const controllable = data.controllable || false;
+        const controllable = !!data.controllable;
 
         const configBody = {
             ssid: homeSSID,
@@ -354,7 +407,9 @@ async function addDevice() {
 
         if (!configResponse.ok) throw new Error('Config failed');
 
-        const userId = auth.currentUser.uid;
+        const user = auth.currentUser;
+        if (!user) throw new Error('User not authenticated');
+        const userId = user.uid;
 
         await set(ref(db, `users/${userId}/devices/${deviceId}`), {
             name: deviceName,
@@ -363,33 +418,30 @@ async function addDevice() {
             controllable: controllable
         });
 
-if (controllable) {
-    await set(ref(db, `devices/${deviceId}/control`), {
-        state: false,
-        lastSeen: Math.floor(Date.now() / 1000)
-    });
-}
-
+        if (controllable) {
+            await set(ref(db, `devices/${deviceId}/control`), {
+                state: false,
+                lastSeen: Math.floor(Date.now() / 1000)
+            });
+        }
 
         hideAddDeviceForm();
         loadDevices();
-
     } catch (error) {
-
-        const sensorP = document.getElementById('info-sensor');
-        if (sensorP) sensorP.innerText = "Offline";
-
-        if (error.name === "AbortError") {
-            document.getElementById('add-error').innerText = "Device not reachable (Offline)";
-        } else {
-            document.getElementById('add-error').innerText = error.message;
+        const addErrEl = document.getElementById('add-error');
+        if (addErrEl) {
+            if (error.name === "AbortError") {
+                addErrEl.innerText = "Device not reachable (Offline)";
+            } else {
+                addErrEl.innerText = error.message;
+            }
         }
+        console.error("addDevice error:", error);
     }
 }
 
-
 async function loadDevices() {
-    for (let unsub of unsubscribes) unsub();
+    for (let unsub of unsubscribes) if (typeof unsub === 'function') unsub();
     unsubscribes = [];
     deviceIsControllable.clear();
     sensorDatas.clear();
@@ -400,12 +452,18 @@ async function loadDevices() {
 
     const activeDeviceIds = [];
 
-    const userId = auth.currentUser.uid;
+    const user = auth.currentUser;
+    if (!user) {
+        const deviceList = document.getElementById('device-list');
+        if (deviceList) deviceList.innerHTML = '<p>Please login to see devices.</p>';
+        return;
+    }
+    const userId = user.uid;
     const devicesRef = ref(db, `users/${userId}/devices`);
     const snapshot = await get(devicesRef);
 
     const deviceList = document.getElementById('device-list');
-    deviceList.innerHTML = '';
+    if (deviceList) deviceList.innerHTML = '';
 
     if (snapshot.exists()) {
         snapshot.forEach((childSnapshot) => {
@@ -416,15 +474,27 @@ async function loadDevices() {
             deviceDiv.className = 'device-item';
 
             deviceDiv.innerHTML = `
+                <img id="img-${deviceId}" src="default-device.png" alt="Device Image" class="device-img">
                 <h3>${deviceData.name}</h3>
                 <p id="status-${deviceId}"></p>
             `;
 
             deviceDiv.onclick = () => showDeviceInfo(deviceId, deviceData.name, deviceData.mac, deviceData.controllable);
-            deviceList.appendChild(deviceDiv);
+            if (deviceList) deviceList.appendChild(deviceDiv);
 
             activeDeviceIds.push(deviceId);
-            deviceIsControllable.set(deviceId, deviceData.controllable);
+            deviceIsControllable.set(deviceId, !!deviceData.controllable);
+
+            // Load device image
+            const imgRef = ref(db, `devices/${deviceId}/image`);
+            get(imgRef).then(imgSnapshot => {
+                const imgEl = document.getElementById(`img-${deviceId}`);
+                if (imgEl && imgSnapshot.exists()) {
+                    imgEl.src = imgSnapshot.val();
+                }
+            }).catch(err => {
+                console.error("Failed to load device image:", err);
+            });
 
             if (deviceData.controllable) {
                 const stateRef = ref(db, `devices/${deviceId}/control/state`);
@@ -450,19 +520,18 @@ async function loadDevices() {
             }
         });
 
-statusInterval = setInterval(() => {
-    activeDeviceIds.forEach(id => updateDeviceStatus(id));
-}, 5000);
-
+        statusInterval = setInterval(() => {
+            activeDeviceIds.forEach(id => updateDeviceStatus(id));
+        }, 5000);
     } else {
-        deviceList.innerHTML = '<p>No devices added yet.</p>';
+        if (deviceList) deviceList.innerHTML = '<p>No devices added yet.</p>';
     }
 }
 
 function clearAllListeners() {
-    for (let unsub of unsubscribes) unsub();
+    for (let unsub of unsubscribes) if (typeof unsub === 'function') unsub();
     unsubscribes = [];
-    for (let unsub of infoUnsubscribes) unsub();
+    for (let unsub of infoUnsubscribes) if (typeof unsub === 'function') unsub();
     infoUnsubscribes = [];
     if (statusInterval) clearInterval(statusInterval);
     statusInterval = null;
@@ -477,6 +546,7 @@ function clearAllListeners() {
 auth.onAuthStateChanged((user) => {
     if (user) {
         showMainScreen();
+        loadProfileImage();
     } else {
         clearAllListeners();
         showElement('login-screen');
@@ -513,17 +583,19 @@ window.renameDevice = renameDevice;
 const eye = document.querySelector('.toggle-password');
 const passwordInput = document.getElementById('home-password');
 
-eye.addEventListener('click', () => {
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        eye.classList.remove('fa-eye');
-        eye.classList.add('fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        eye.classList.remove('fa-eye-slash');
-        eye.classList.add('fa-eye');
-    }
-});
+if (eye && passwordInput) {
+  eye.addEventListener('click', () => {
+      if (passwordInput.type === 'password') {
+          passwordInput.type = 'text';
+          eye.classList.remove('fa-eye');
+          eye.classList.add('fa-eye-slash');
+      } else {
+          passwordInput.type = 'password';
+          eye.classList.remove('fa-eye-slash');
+          eye.classList.add('fa-eye');
+      }
+  });
+}
 
 let ptrStartY = 0;
 let ptrReady = false;
@@ -542,7 +614,7 @@ document.addEventListener('touchstart', e => {
 });
 
 document.addEventListener('touchmove', e => {
-  if (!ptrReady) return;
+  if (!ptrReady || !ptr) return;
 
   const diff = e.touches[0].clientY - ptrStartY;
 
@@ -557,14 +629,12 @@ document.addEventListener('touchmove', e => {
 }, { passive: false });
 
 document.addEventListener('touchend', () => {
-  if (!ptrReady) return;
+  if (!ptrReady || !ptr) return;
 
   if (ptrTriggered) {
     ptr.style.top = '0px';
-
-
-      refresh();
-      loadProfileImage()
+    refresh();
+    loadProfileImage();
 
     setTimeout(() => {
       ptr.style.top = '-80px';
@@ -594,7 +664,7 @@ function loadProfileImage() {
     const userRef = ref(db, `users/${userId}/profileImage`);
     get(userRef).then(snapshot => {
         if (snapshot.exists()) {
-            profilePreview.src = snapshot.val();
+            if (profilePreview) profilePreview.src = snapshot.val();
         }
     }).catch(err => {
         console.log("Failed to load profile image:", err);
@@ -611,18 +681,19 @@ let isDragging = false;
 let startX, startY, startLeft, startTop;
 
 function initDrag(e) {
+    if (!cropImg) return;
     isDragging = true;
-    startX = e.clientX || e.touches[0].clientX;
-    startY = e.clientY || e.touches[0].clientY;
+    startX = e.clientX || (e.touches && e.touches[0].clientX);
+    startY = e.clientY || (e.touches && e.touches[0].clientY);
     startLeft = parseFloat(cropImg.style.left) || 0;
     startTop = parseFloat(cropImg.style.top) || 0;
 }
 
 function drag(e) {
-    if (!isDragging) return;
+    if (!isDragging || !cropImg) return;
     e.preventDefault();
-    const clientX = e.clientX || e.touches[0].clientX;
-    const clientY = e.clientY || e.touches[0].clientY;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
     let dx = clientX - startX;
     let dy = clientY - startY;
     let newLeft = startLeft + dx;
@@ -640,76 +711,137 @@ function endDrag() {
     isDragging = false;
 }
 
-cropImg.addEventListener('mousedown', initDrag);
-cropImg.addEventListener('touchstart', initDrag, {passive: false});
+if (cropImg) {
+  cropImg.addEventListener('mousedown', initDrag);
+  cropImg.addEventListener('touchstart', initDrag, {passive: false});
+}
 document.addEventListener('mousemove', drag);
 document.addEventListener('touchmove', drag, {passive: false});
 document.addEventListener('mouseup', endDrag);
 document.addEventListener('touchend', endDrag);
 
-profileInput.addEventListener('change', () => {
-    const file = profileInput.files[0];
-    if (!file) return;
-    if (currentURL) URL.revokeObjectURL(currentURL);
-    currentURL = URL.createObjectURL(file);
-    cropImg.src = currentURL;
-    cropImg.onload = () => {
-        const containerSize = 200;
-        const imgW = cropImg.naturalWidth;
-        const imgH = cropImg.naturalHeight;
-        const scale = Math.max(containerSize / imgW, containerSize / imgH);
-        const scaledW = imgW * scale;
-        const scaledH = imgH * scale;
-        cropImg.style.width = scaledW + 'px';
-        cropImg.style.height = scaledH + 'px';
-        cropImg.style.left = - (scaledW - containerSize) / 2 + 'px';
-        cropImg.style.top = - (scaledH - containerSize) / 2 + 'px';
-    };
-    showElement('crop-modal');
-});
+const deviceImgInput = document.getElementById("device-img-input");
+const deviceImgPreview = document.getElementById("device-img-preview");
+const deviceImgError = document.getElementById("device-image-error");
 
-cropBtn.addEventListener('click', async () => {
-    const containerSize = 200;
-    const left = parseFloat(cropImg.style.left);
-    const top = parseFloat(cropImg.style.top);
-    const imgWidth = cropImg.width;
-    const imgHeight = cropImg.height;
-    const scale = imgWidth / cropImg.naturalWidth;
-    const sx = -left / scale;
-    const sy = -top / scale;
-    const sw = containerSize / scale;
-    const sh = containerSize / scale;
-    const canvas = document.createElement('canvas');
-    canvas.width = containerSize;
-    canvas.height = containerSize;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(cropImg, sx, sy, sw, sh, 0, 0, containerSize, containerSize);
-    const base64 = canvas.toDataURL('image/png');
-    const userId = auth.currentUser.uid;
-    try {
-        await set(ref(db, `users/${userId}/profileImage`), base64);
-        profilePreview.src = base64;
-        profileError.innerText = "Profile image uploaded successfully!";
-    } catch (err) {
-        profileError.innerText = "Failed to upload: " + err.message;
-    }
-    hideElement('crop-modal');
-    URL.revokeObjectURL(currentURL);
-    currentURL = null;
-    profileInput.value = '';
-});
+let currentDeviceId = null;
+let cropType = null;
 
-cancelCrop.addEventListener('click', () => {
-    hideElement('crop-modal');
-    if (currentURL) {
-        URL.revokeObjectURL(currentURL);
-        currentURL = null;
-    }
-    profileInput.value = '';
-});
+function setCurrentDevice(deviceId) {
+    currentDeviceId = deviceId;
+}
 
-auth.onAuthStateChanged(user => {
-    if (user) {
-        loadProfileImage();
-    }
-});
+if (profileInput && cropImg) {
+  profileInput.addEventListener('change', () => {
+      const file = profileInput.files[0];
+      if (!file) return;
+      if (currentURL) URL.revokeObjectURL(currentURL);
+      currentURL = URL.createObjectURL(file);
+      cropType = 'profile';
+      cropImg.src = currentURL;
+      cropImg.onload = () => {
+          const containerSize = 200;
+          const imgW = cropImg.naturalWidth;
+          const imgH = cropImg.naturalHeight;
+          const scale = Math.max(containerSize / imgW, containerSize / imgH);
+          const scaledW = imgW * scale;
+          const scaledH = imgH * scale;
+          cropImg.style.width = scaledW + 'px';
+          cropImg.style.height = scaledH + 'px';
+          cropImg.style.left = - (scaledW - containerSize) / 2 + 'px';
+          cropImg.style.top = - (scaledH - containerSize) / 2 + 'px';
+      };
+      showElement('crop-modal');
+  });
+}
+
+if (deviceImgInput && cropImg) {
+  deviceImgInput.addEventListener('change', () => {
+      const file = deviceImgInput.files[0];
+      if (!file) return;
+      if (!currentDeviceId) {
+        if (deviceImgError) deviceImgError.innerText = "No device selected";
+        return;
+      }
+      if (currentURL) URL.revokeObjectURL(currentURL);
+      currentURL = URL.createObjectURL(file);
+      cropType = 'device';
+      cropImg.src = currentURL;
+      cropImg.onload = () => {
+          const containerSize = 200;
+          const imgW = cropImg.naturalWidth;
+          const imgH = cropImg.naturalHeight;
+          const scale = Math.max(containerSize / imgW, containerSize / imgH);
+          const scaledW = imgW * scale;
+          const scaledH = imgH * scale;
+          cropImg.style.width = scaledW + 'px';
+          cropImg.style.height = scaledH + 'px';
+          cropImg.style.left = - (scaledW - containerSize) / 2 + 'px';
+          cropImg.style.top = - (scaledH - containerSize) / 2 + 'px';
+      };
+      showElement('crop-modal');
+  });
+}
+
+if (cropBtn && cropImg) {
+  cropBtn.addEventListener('click', async () => {
+      const containerSize = 200;
+      const left = parseFloat(cropImg.style.left) || 0;
+      const top = parseFloat(cropImg.style.top) || 0;
+      const imgWidth = cropImg.width;
+      const imgHeight = cropImg.height;
+      const scale = imgWidth / cropImg.naturalWidth;
+      const sx = -left / scale;
+      const sy = -top / scale;
+      const sw = containerSize / scale;
+      const sh = containerSize / scale;
+      const canvas = document.createElement('canvas');
+      canvas.width = containerSize;
+      canvas.height = containerSize;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(cropImg, sx, sy, sw, sh, 0, 0, containerSize, containerSize);
+      const base64 = canvas.toDataURL('image/jpeg', 0.6);
+
+
+      const user = auth.currentUser;
+      if (!user) {
+          if (cropType === 'profile' && profileError) profileError.innerText = "Not authenticated";
+          if (cropType === 'device' && deviceImgError) deviceImgError.innerText = "Not authenticated";
+          return;
+      }
+      const userId = user.uid;
+      try {
+          if (cropType === 'profile') {
+            await set(ref(db, `users/${userId}/profileImage`), base64);
+            if (profilePreview) profilePreview.src = base64;
+            if (profileError) profileError.innerText = "Profile image uploaded successfully!";
+          } else if (cropType === 'device') {
+            await set(ref(db, `devices/${currentDeviceId}/image`), base64);
+            if (deviceImgPreview) deviceImgPreview.src = base64;
+            if (deviceImgError) deviceImgError.innerText = "Device image uploaded successfully!";
+          }
+      } catch (err) {
+          if (cropType === 'profile' && profileError) profileError.innerText = "Failed to upload: " + err.message;
+          if (cropType === 'device' && deviceImgError) deviceImgError.innerText = "Failed to upload: " + err.message;
+      }
+      hideElement('crop-modal');
+      if (currentURL) URL.revokeObjectURL(currentURL);
+      currentURL = null;
+      if (cropType === 'profile' && profileInput) profileInput.value = '';
+      if (cropType === 'device' && deviceImgInput) deviceImgInput.value = '';
+      cropType = null;
+  });
+}
+
+if (cancelCrop) {
+  cancelCrop.addEventListener('click', () => {
+      hideElement('crop-modal');
+      if (currentURL) {
+          URL.revokeObjectURL(currentURL);
+          currentURL = null;
+      }
+      if (cropType === 'profile' && profileInput) profileInput.value = '';
+      if (cropType === 'device' && deviceImgInput) deviceImgInput.value = '';
+      cropType = null;
+  });
+}

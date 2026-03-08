@@ -20,10 +20,17 @@
             <input type="password" id="password" placeholder="Password">
             <button onclick="login()">Login</button>
             <button onclick="signup()">Sign Up</button>
+            <button onclick="resetPassword()">Reset Password</button>
             <p id="auth-error"></p>
         </div>
         <div id="info-screen" style="display: none;">
     <h2 id="info-device-name"></h2>
+    <div class="profile-image-container">
+        <img id="device-img-preview" src="default-device.png" alt="Device Image">
+        <label for="device-img-input" class="upload-label"><i class="fa-solid fa-camera"></i></label>
+        <input type="file" id="device-img-input" accept="image/*" style="display: none;">
+    </div>
+    <p id="device-image-error"></p>
     <p id="info-sensor"></p>
     <div id="control-section" style="display: none;">
         <button id="toggle-button">Toggle</button>
@@ -33,6 +40,7 @@
 
         <div id="main-screen" style="display: none;">
             <div id="device-list"></div>
+
             <div id="add-device-modal" style="display: none;">
                 <h2>Add Device</h2>
                 <input type="text" id="home-ssid" placeholder="Home WiFi SSID">
@@ -71,17 +79,18 @@
                 <h3>Account</h3>
                 <button class="logoutbtn" onclick="logout()">Logout</button>
             </section>
-            <div id="crop-modal" style="display: none;">
+        </div>
+        </div>
+        
+    </div>
+
+                <div id="crop-modal" style="display: none;">
                 <div class="crop-container">
                     <img id="crop-img" src="" alt="">
                 </div>
                 <button id="crop-btn">Upload</button>
                 <button id="cancel-crop">Cancel</button>
             </div>
-        </div>
-        </div>
-        
-    </div>
     
     
 
