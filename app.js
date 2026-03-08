@@ -31,8 +31,6 @@ function vibrate() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
         window.Capacitor.Plugins.Haptics.impact({ style: 'MEDIUM' });
     } else if (navigator.vibrate) {
-        navigator.vibrate(50);
-    } else if (navigator.vibrate) {
     navigator.vibrate(200); // vibrate for 200 ms
     }
  }
