@@ -85,6 +85,10 @@ function showMainScreen() {
     showElement('footer', 'flex');
     document.getElementById('homebtn').classList.add("active");
     document.getElementById('settingsbtn').classList.remove("active");
+    if (infoInterval) clearInterval(infoInterval);
+    infoInterval = null;
+    for (let unsub of infoUnsubscribes) unsub();
+    infoUnsubscribes = [];
     loadDevices();
 }
 
@@ -97,6 +101,58 @@ function settings() {
     document.getElementById('homebtn').classList.remove("active");
     showElement('footer', 'flex');
     document.getElementById('settingsbtn').classList.add("active");
+    if (infoInterval) clearInterval(infoInterval);
+    infoInterval = null;
+    for (let unsub of infoUnsubscribes) unsub();
+    infoUnsubscribes = [];
+}
+
+const offlineThreshold = 30;
+
+let unsubscribes = [];
+let infoUnsubscribes = [];
+let statusInterval = null;
+let infoInterval = null;
+const deviceIsControllable = new Map();
+const sensorDatas = new Map();
+const controlStates = new Map();
+const controlLastSeens = new Map();
+
+function updateDeviceStatus(deviceId) {
+    const statusP = document.getElementById(`status-${deviceId}`);
+    if (!statusP) return;
+
+    const isControllable = deviceIsControllable.get(deviceId);
+    if (isControllable) {
+        const state = controlStates.get(deviceId) || false;
+        const ls = controlLastSeens.get(deviceId);
+        const online = typeof ls === "number" && (Date.now() / 1000 - ls) < offlineThreshold;
+        if (!online) {
+            statusP.innerHTML = 'Offline';
+            statusP.style.color = 'red';
+        } else {
+            const stateColor = state ? "green" : "red";
+            statusP.innerHTML = `LED: <span style="color:${stateColor}; font-weight:bold; font-size:16px;">${state ? 'ON' : 'OFF'}</span>`;
+            statusP.style.color = 'white';
+        }
+    } else {
+        const sensorData = sensorDatas.get(deviceId);
+        if (
+    sensorData &&
+    typeof sensorData.timestamp === "number" &&
+    (Date.now() / 1000 - sensorData.timestamp) < offlineThreshold
+)
+ {
+            const temp = convertTemperature(sensorData.temperature);
+            const tempColor = sensorData.temperature >= 23 ? "rgb(219, 12, 12)" : "white";
+            let humidityColor = "white";
+            if (sensorData.humidity >= 60 || sensorData.humidity <= 20) humidityColor = "blue";
+            statusP.style.color = 'white';
+        } else {
+            statusP.innerHTML = 'Offline';
+            statusP.style.color = 'red';
+        }
+    }
 }
 
 function showDeviceInfo(deviceId, deviceName, mac, controllable) {
@@ -111,51 +167,106 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
     const sensorP = document.getElementById('info-sensor');
     const controlDiv = document.getElementById('control-section');
 
+    for (let unsub of infoUnsubscribes) unsub();
+    infoUnsubscribes = [];
+    if (infoInterval) clearInterval(infoInterval);
+    infoInterval = null;
+
     if (controllable) {
         sensorP.style.display = 'none';
         controlDiv.style.display = 'block';
         const stateRef = ref(db, `devices/${deviceId}/control/state`);
+        const lastSeenRef = ref(db, `devices/${deviceId}/control/lastSeen`);
         const toggleBtn = document.getElementById('toggle-button');
 
-        onValue(stateRef, (stateSnap) => {
-            const state = stateSnap.val();
-            toggleBtn.innerText = state ? 'Turn Off' : 'Turn On';
+        let currentState = false;
+        let currentLastSeen = undefined;
+        let currentOnline = false;
+
+        const updateButton = () => {
+            if (!currentOnline) {
+                toggleBtn.innerText = 'Offline';
+                toggleBtn.disabled = true;
+            } else {
+                toggleBtn.innerText = currentState ? 'Turn Off' : 'Turn On';
+                toggleBtn.disabled = false;
+            }
+        };
+
+        const stateUnsub = onValue(stateRef, (stateSnap) => {
+            currentState = stateSnap.val() || false;
+            updateButton();
         });
+        infoUnsubscribes.push(stateUnsub);
+
+const lastSeenUnsub = onValue(lastSeenRef, (snap) => {
+    const val = snap.val();
+
+    currentLastSeen = val;  
+    controlLastSeens.set(deviceId, val);
+
+    currentOnline = typeof val === "number" && (Date.now()/1000 - val) < offlineThreshold;
+
+    updateDeviceStatus(deviceId);
+    updateButton();
+});
+
+
+        infoUnsubscribes.push(lastSeenUnsub);
 
         toggleBtn.onclick = () => {
+            if (!currentOnline) return;
             get(stateRef).then((snap) => {
                 const current = snap.val();
                 set(stateRef, !current);
             });
         };
+
+        infoInterval = setInterval(() => {
+            if (currentLastSeen !== undefined) {
+                currentOnline = currentLastSeen && (Date.now() / 1000 - currentLastSeen < offlineThreshold);
+                updateButton();
+            }
+        }, 60000);
     } else {
         sensorP.style.display = 'block';
         controlDiv.style.display = 'none';
         const dataRef = ref(db, `devices/${deviceId}/sensor`);
 
-        onValue(dataRef, (dataSnapshot) => {
-            const sensorData = dataSnapshot.val();
+        let currentSensorData = null;
 
-            if (sensorData) {
-                const temp = convertTemperature(sensorData.temperature);
-                const tempColor = sensorData.temperature >= 23 ? "rgb(219, 12, 12)" : "white";
+        const updateInfo = () => {
+            if (currentSensorData && (Date.now() / 1000 - currentSensorData.timestamp < offlineThreshold)) {
+                const temp = convertTemperature(currentSensorData.temperature);
+                const tempColor = currentSensorData.temperature >= 23 ? "rgb(219, 12, 12)" : "white";
 
                 let humidityColor = "white";
-                if (sensorData.humidity >= 60 || sensorData.humidity <= 20) humidityColor = "blue";
+                if (currentSensorData.humidity >= 60 || currentSensorData.humidity <= 20) humidityColor = "blue";
 
                 sensorP.innerHTML = `
                     Temp: <span style="color:${tempColor}; font-weight:bold; font-size:16px;">
                     ${temp.value.toFixed(2)}${temp.unit}</span><br>
 
                     Hum: <span style="color:${humidityColor}; font-weight:bold; font-size:16px;">
-                    ${sensorData.humidity.toFixed(2)}%</span><br>
+                    ${currentSensorData.humidity.toFixed(2)}%</span><br>
 
-                    Last: ${new Date(sensorData.timestamp * 1000).toLocaleString()}
+                    Last: ${new Date(currentSensorData.timestamp * 1000).toLocaleString()}
                 `;
             } else {
-                sensorP.innerHTML = 'No sensor data available.';
+                sensorP.innerHTML = 'Offline';
+                statusP.style.color = 'red';
             }
+        };
+
+        const dataUnsub = onValue(dataRef, (dataSnapshot) => {
+            currentSensorData = dataSnapshot.val();
+            updateInfo();
         });
+        infoUnsubscribes.push(dataUnsub);
+
+        infoInterval = setInterval(() => {
+            updateInfo();
+        }, 60000);
     }
 }
 
@@ -209,8 +320,21 @@ async function addDevice() {
     const deviceName = document.getElementById('device-name').value || 'My Device';
 
     try {
-        const response = await fetch(`http://${ESP_IP}/data`);
-        if (!response.ok) throw new Error('Failed to fetch data');
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+
+        const response = await fetch(`http://${ESP_IP}/data`, {
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+            const sensorP = document.getElementById('info-sensor');
+            if (sensorP) sensorP.innerText = 'Offline';
+            throw new Error('Failed to fetch data');
+        }
 
         const data = await response.json();
         const deviceId = data.mac.replace(/:/g, '');
@@ -239,18 +363,43 @@ async function addDevice() {
             controllable: controllable
         });
 
-        if (controllable) {
-            await set(ref(db, `devices/${deviceId}/control/state`), false);
-        }
+if (controllable) {
+    await set(ref(db, `devices/${deviceId}/control`), {
+        state: false,
+        lastSeen: Math.floor(Date.now() / 1000)
+    });
+}
+
 
         hideAddDeviceForm();
         loadDevices();
+
     } catch (error) {
-        document.getElementById('add-error').innerText = error.message;
+
+        const sensorP = document.getElementById('info-sensor');
+        if (sensorP) sensorP.innerText = "Offline";
+
+        if (error.name === "AbortError") {
+            document.getElementById('add-error').innerText = "Device not reachable (Offline)";
+        } else {
+            document.getElementById('add-error').innerText = error.message;
+        }
     }
 }
 
+
 async function loadDevices() {
+    for (let unsub of unsubscribes) unsub();
+    unsubscribes = [];
+    deviceIsControllable.clear();
+    sensorDatas.clear();
+    controlStates.clear();
+    controlLastSeens.clear();
+    if (statusInterval) clearInterval(statusInterval);
+    statusInterval = null;
+
+    const activeDeviceIds = [];
+
     const userId = auth.currentUser.uid;
     const devicesRef = ref(db, `users/${userId}/devices`);
     const snapshot = await get(devicesRef);
@@ -274,41 +423,62 @@ async function loadDevices() {
             deviceDiv.onclick = () => showDeviceInfo(deviceId, deviceData.name, deviceData.mac, deviceData.controllable);
             deviceList.appendChild(deviceDiv);
 
+            activeDeviceIds.push(deviceId);
+            deviceIsControllable.set(deviceId, deviceData.controllable);
+
             if (deviceData.controllable) {
                 const stateRef = ref(db, `devices/${deviceId}/control/state`);
-                onValue(stateRef, (stateSnapshot) => {
-                    const state = stateSnapshot.val();
-                    const statusP = document.getElementById(`status-${deviceId}`);
-                    if (statusP) {
-                        const stateColor = state ? "green" : "red";
-                        statusP.innerHTML = `LED: <span style="color:${stateColor}; font-weight:bold; font-size:16px;">${state ? 'ON' : 'OFF'}</span>`;
-                    }
+                const stateUnsub = onValue(stateRef, (stateSnapshot) => {
+                    controlStates.set(deviceId, stateSnapshot.val());
+                    updateDeviceStatus(deviceId);
                 });
+                unsubscribes.push(stateUnsub);
+
+                const lastSeenRef = ref(db, `devices/${deviceId}/control/lastSeen`);
+                const lastSeenUnsub = onValue(lastSeenRef, (snap) => {
+                    controlLastSeens.set(deviceId, snap.val());
+                    updateDeviceStatus(deviceId);
+                });
+                unsubscribes.push(lastSeenUnsub);
             } else {
                 const dataRef = ref(db, `devices/${deviceId}/sensor`);
-                onValue(dataRef, (dataSnapshot) => {
-                    const sensorData = dataSnapshot.val();
-                    const statusP = document.getElementById(`status-${deviceId}`);
-                    if (sensorData && statusP) {
-                        const temp = convertTemperature(sensorData.temperature);
-                        const tempColor = sensorData.temperature >= 23 ? "rgb(219, 12, 12)" : "white";
-                        let humidityColor = "white";
-                        if (sensorData.humidity >= 60 || sensorData.humidity <= 20) humidityColor = "blue";
-                    } else if (statusP) {
-                        statusP.innerHTML = 'No sensor data available.';
-                    }
+                const dataUnsub = onValue(dataRef, (dataSnapshot) => {
+                    sensorDatas.set(deviceId, dataSnapshot.val());
+                    updateDeviceStatus(deviceId);
                 });
+                unsubscribes.push(dataUnsub);
             }
         });
+
+statusInterval = setInterval(() => {
+    activeDeviceIds.forEach(id => updateDeviceStatus(id));
+}, 5000);
+
     } else {
         deviceList.innerHTML = '<p>No devices added yet.</p>';
     }
+}
+
+function clearAllListeners() {
+    for (let unsub of unsubscribes) unsub();
+    unsubscribes = [];
+    for (let unsub of infoUnsubscribes) unsub();
+    infoUnsubscribes = [];
+    if (statusInterval) clearInterval(statusInterval);
+    statusInterval = null;
+    if (infoInterval) clearInterval(infoInterval);
+    infoInterval = null;
+    deviceIsControllable.clear();
+    sensorDatas.clear();
+    controlStates.clear();
+    controlLastSeens.clear();
 }
 
 auth.onAuthStateChanged((user) => {
     if (user) {
         showMainScreen();
     } else {
+        clearAllListeners();
         showElement('login-screen');
         hideElement('main-screen');
         hideElement('settings-screen');
@@ -320,6 +490,7 @@ auth.onAuthStateChanged((user) => {
 
 function logout() {
     auth.signOut().then(() => {
+        clearAllListeners();
         showElement('login-screen');
         hideElement('main-screen');
         hideElement('info-screen');
@@ -409,3 +580,55 @@ function refresh() {
     loadDevices();
     vibrate();
 }
+
+const profileInput = document.getElementById('profile-img-input');
+const profilePreview = document.getElementById('profile-img-preview');
+const uploadProfileBtn = document.getElementById('upload-profile-btn');
+const profileError = document.getElementById('profile-error');
+
+function loadProfileImage() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const userId = user.uid;
+    const userRef = ref(db, `users/${userId}/profileImage`);
+    get(userRef).then(snapshot => {
+        if (snapshot.exists()) {
+            profilePreview.src = snapshot.val();
+        }
+    }).catch(err => {
+        console.log("Failed to load profile image:", err);
+    });
+}
+
+uploadProfileBtn.addEventListener('click', () => {
+    const file = profileInput.files[0];
+    if (!file) {
+        profileError.innerText = "Please select an image.";
+        return;
+    }
+
+    profileError.innerText = "";
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const base64String = e.target.result;
+        const userId = auth.currentUser.uid;
+
+        try {
+            await set(ref(db, `users/${userId}/profileImage`), base64String);
+            profilePreview.src = base64String;
+            profileError.innerText = "Profile image uploaded successfully!";
+        } catch (err) {
+            profileError.innerText = "Failed to upload: " + err.message;
+        }
+    };
+
+    reader.readAsDataURL(file);
+});
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        loadProfileImage();
+    }
+});

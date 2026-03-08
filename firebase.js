@@ -2,6 +2,9 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
+
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyBtKzChDkWMPIlReHYWiwO6snDVM2WhQ3c",
   authDomain: "esp32test-1f152.firebaseapp.com",
