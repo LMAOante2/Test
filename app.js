@@ -364,112 +364,56 @@ function hideAddDeviceForm() {
     hideElement('add-device-modal');
 }
 
-async function fetchWithTimeout(url, options = {}, timeout = 4000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(id);
-    return res;
-  } catch (err) {
-    clearTimeout(id);
-    throw err;
-  }
-}
-
-async function tryHosts(path, options = {}, timeout = 4000) {
-
-  const hosts = [
-    `http://${PROVISIONING_HOST}`, // esp-device.local
-    `http://192.168.4.1`           // fallback
-  ];
-
-  for (const host of hosts) {
-    try {
-
-      const res = await fetchWithTimeout(
-        `${host}${path}`,
-        options,
-        timeout
-      );
-
-      if (!res.ok) throw new Error(res.statusText);
-
-      return res;
-
-    } catch (err) {
-
-      console.warn("Failed:", host, err);
-
-    }
-  }
-
-  throw new Error("ESP32 not reachable");
-}
-
 async function addDevice() {
 
-  const homeSSID = document.getElementById("home-ssid").value;
-  const homePassword = document.getElementById("home-password").value;
-  const deviceName = document.getElementById("device-name").value || "My Device";
+    const homeSSID = document.getElementById("home-ssid").value;
+    const homePassword = document.getElementById("home-password").value;
+    const deviceName = document.getElementById("device-name").value || "My Device";
 
-  const user = auth.currentUser;
+    const user = auth.currentUser;
 
-  if (!user) {
-    alert("Not logged in");
-    return;
-  }
+    if (!user) {
+        alert("Not logged in");
+        return;
+    }
 
-  const uid = user.uid;
+    const uid = user.uid;
 
-  try {
+    try {
 
-    // get device info
-    const res = await tryHosts("/data", {
-      method: "GET",
-      headers: { "Accept": "application/json" }
-    }, 3000);
+        const res = await fetch(`http://${PROVISIONING_HOST}/data`);
+        const data = await res.json();
 
-    const data = await res.json();
+        const deviceId = data.mac.replace(/:/g,'');
 
-    const deviceId = data.mac.replace(/:/g, '');
+        await fetch(`http://${PROVISIONING_HOST}/configure`,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                ssid:homeSSID,
+                password:homePassword,
+                deviceId:deviceId
+            })
+        });
 
-    // send wifi config to ESP
-    await tryHosts("/configure", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        ssid: homeSSID,
-        password: homePassword,
-        deviceId: deviceId
-      })
-    }, 5000);
+        // SAVE DEVICE TO FIREBASE
+        await set(ref(db, `users/${uid}/devices/${deviceId}`), {
+            name: deviceName,
+            mac: data.mac,
+            controllable: true
+        });
 
-    // save device in firebase
-    await set(ref(db, `users/${uid}/devices/${deviceId}`), {
-      name: deviceName,
-      mac: data.mac,
-      controllable: true
-    });
+        alert("Device added! Reconnect to internet.");
 
-    alert("Device added! Reconnect to your normal WiFi.");
+    } catch(err){
 
-  } catch (err) {
+        console.error(err);
+        alert("ESP32 not reachable");
 
-    console.error(err);
-
-    alert(
-      "ESP32 not reachable.\n\n" +
-      "Make sure you are connected to the ESP WiFi.\n" +
-      "Disable mobile data if using a phone."
-    );
-
-  }
+    }
 }
-
 
 
 
