@@ -1,106 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Devices</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Devices</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
-
-    <div id="ptr-container">
-  <div class="ptr-spinner"></div>
-</div>
 <body>
 
-    <div id="app">
-        <div id="login-screen">
-            <h1>Login</h1>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
-            <button onclick="login()">Login</button>
-            <button onclick="signup()">Sign Up</button>
-            <button onclick="resetPassword()">Reset Password</button>
-            <p id="auth-error"></p>
-        </div>
-        <div id="info-screen" style="display: none;">
-    <h2 id="info-device-name"></h2>
-    <div class="profile-image-container">
+  <!-- Pull-to-refresh container (keeps inside body) -->
+  <div id="ptr-container" style="top:-80px; position:relative;">
+    <div class="ptr-spinner"></div>
+  </div>
+
+  <div id="app">
+    <div id="login-screen">
+      <h1>Login</h1>
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <button onclick="signup()">Sign Up</button>
+      <button onclick="resetPassword()">Reset Password</button>
+      <p id="auth-error"></p>
+    </div>
+
+    <div id="info-screen" style="display:none;">
+      <h2 id="info-device-name"></h2>
+      <div class="profile-image-container">
         <img id="device-img-preview" src="default-device.png" alt="Device Image">
         <label for="device-img-input" class="upload-label"><i class="fa-solid fa-camera"></i></label>
-        <input type="file" id="device-img-input" accept="image/*" style="display: none;">
-    </div>
-    <p id="device-image-error"></p>
-    <p id="info-sensor"></p>
-    <div id="control-section" style="display: none;">
+        <input type="file" id="device-img-input" accept="image/*" style="display:none;">
+      </div>
+      <p id="device-image-error"></p>
+      <p id="info-sensor"></p>
+      <div id="control-section" style="display:none;">
         <button id="toggle-button">Toggle</button>
-    </div>
-    <button class="back" onclick="showMainScreen()"><i class="fa-solid fa-arrow-left backicon" ></i></button>
-</div>
-
-        <div id="main-screen" style="display: none;">
-            <div id="device-list"></div>
-
-            <div id="add-device-modal" style="display: none;">
-                <h2>Add Device</h2>
-                <input type="text" id="home-ssid" placeholder="Home WiFi SSID">
-                <div class="password-container">
-                <input type="password" id="home-password" placeholder="Home WiFi Password">
-                <i class="fa-solid fa-eye toggle-password"></i>
-                </div>
-                <input type="text" id="device-name" placeholder="Device Name (optional)">
-                <button onclick="addDevice()">Submit</button>
-                <button onclick="hideAddDeviceForm()">Cancel</button>
-                <p id="add-error"></p>
-            </div>
-        </div>
-
-        <div id="settings-screen" style="display: none;">
-            <h2>Settings</h2>
-            <section class="settings-section">
-                <h3>Profile Picture</h3>
-                <div class="profile-image-container">
-                    <img id="profile-img-preview" src="default-profile.png" alt="Profile Image">
-                    <label for="profile-img-input" class="upload-label"><i class="fa-solid fa-camera"></i></label>
-                    <input type="file" id="profile-img-input" accept="image/*" style="display: none;">
-                </div>
-                <p id="profile-error"></p>
-            </section>
-            <section class="settings-section">
-                <h3>Temperature Unit</h3>
-                <div class="units">
-                    <input style="display: none;" checked type="checkbox" id="celsius">
-                    <input style="display: none;" type="checkbox" id="fahrenheit">
-                    <p>°C</p><label for="celsius" class="icon"><span class="box"><i class="fa-solid fa-check check" ></i></span></label>
-                    <p>°F</p> <label for="fahrenheit" class="icon1"><span class="box1"><i class="fa-solid fa-check check1"></i></span></label>
-                </div>
-            </section>
-            <section class="settings-section">
-                <h3>Account</h3>
-                <button class="logoutbtn" onclick="logout()">Logout</button>
-            </section>
-        </div>
-        </div>
-        
+      </div>
+      <button class="back" onclick="showMainScreen()"><i class="fa-solid fa-arrow-left backicon"></i></button>
     </div>
 
-                <div id="crop-modal" style="display: none;">
-                <div class="crop-container">
-                    <img id="crop-img" src="" alt="">
-                </div>
-                <button id="crop-btn">Upload</button>
-                <button id="cancel-crop">Cancel</button>
-            </div>
-    
-    
+    <div id="main-screen" style="display:none;">
+      <div id="device-list"></div>
 
-    <button onclick="showAddDeviceForm()" class="adddevicebtn" id="addevicebtn"><i class="fa-solid fa-plus addicon"></i></button>
-    <footer id="footer" class="footer">
-        <button id="homebtn" onclick="showMainScreen()"><i class="fa-solid fa-house footeri"></i></button>
-        <button id="settingsbtn" onclick="settings()"><i class="fa-solid fa-gear footeri"></i></button>
-    </footer>
+      <div id="add-device-modal" style="display:none;">
+        <h2>Add Device</h2>
+        <input type="text" id="home-ssid" placeholder="Home WiFi SSID">
+        <div class="password-container">
+          <input type="password" id="home-password" placeholder="Home WiFi Password">
+          <i class="fa-solid fa-eye toggle-password"></i>
+        </div>
+        <input type="text" id="device-name" placeholder="Device Name (optional)">
+        <button onclick="addDevice()">Submit</button>
+        <button onclick="hideAddDeviceForm()">Cancel</button>
+        <p id="add-error"></p>
+      </div>
+    </div>
 
-    <script type="module" src="firebase.js"></script>
-    <script type="module" src="app.js"></script>
+    <div id="settings-screen" style="display:none;">
+      <h2>Settings</h2>
+
+      <section class="settings-section">
+        <h3>Profile Picture</h3>
+        <div class="profile-image-container">
+          <img id="profile-img-preview" src="default-profile.png" alt="Profile Image">
+          <label for="profile-img-input" class="upload-label"><i class="fa-solid fa-camera"></i></label>
+          <input type="file" id="profile-img-input" accept="image/*" style="display:none;">
+        </div>
+        <p id="profile-error"></p>
+      </section>
+
+      <section class="settings-section">
+        <h3>Temperature Unit</h3>
+        <div class="units">
+          <input style="display:none;" checked type="checkbox" id="celsius">
+          <input style="display:none;" type="checkbox" id="fahrenheit">
+          <p>°C</p><label for="celsius" class="icon"><span class="box"><i class="fa-solid fa-check check"></i></span></label>
+          <p>°F</p><label for="fahrenheit" class="icon1"><span class="box1"><i class="fa-solid fa-check check1"></i></span></label>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h3>Account</h3>
+        <button class="logoutbtn" onclick="logout()">Logout</button>
+      </section>
+    </div>
+  </div>
+
+  <div id="crop-modal" style="display:none;">
+    <div class="crop-container">
+      <img id="crop-img" src="" alt="">
+    </div>
+    <button id="crop-btn">Upload</button>
+    <button id="cancel-crop">Cancel</button>
+  </div>
+
+  <button onclick="showAddDeviceForm()" class="adddevicebtn" id="addevicebtn"><i class="fa-solid fa-plus addicon"></i></button>
+
+  <footer id="footer" class="footer" style="display:none;">
+    <button id="homebtn" onclick="showMainScreen()"><i class="fa-solid fa-house footeri"></i></button>
+    <button id="settingsbtn" onclick="settings()"><i class="fa-solid fa-gear footeri"></i></button>
+  </footer>
+
+  <!-- firebase.js must export the things your app expects -->
+  <script type="module" src="firebase.js"></script>
+  <!-- your application code -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>

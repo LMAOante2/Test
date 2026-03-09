@@ -9,7 +9,9 @@ import {
   get
 } from './firebase.js';
 
-const ESP_IP = '192.168.4.1';
+const PROVISIONING_TOKEN = "AB12CD34";           // ← must match ESP32 sketch
+const PROVISIONING_HOST = "esp-device.local";    // mDNS name from ESP
+const PROVISIONING_TIMEOUT_MS = 5000;
 
 const celsius = document.getElementById("celsius");
 const fahrenheit = document.getElementById("fahrenheit");
@@ -31,10 +33,9 @@ function vibrate() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
         window.Capacitor.Plugins.Haptics.impact({ style: 'MEDIUM' });
     } else if (navigator.vibrate) {
-    navigator.vibrate(200); // vibrate for 200 ms
+        navigator.vibrate(50);
     }
- }
-  
+}
 
 const savedUnit = localStorage.getItem("tempUnit");
 
@@ -164,10 +165,6 @@ function updateDeviceStatus(deviceId) {
             let humidityColor = "white";
             if (Number(sensorData.humidity) >= 60 || Number(sensorData.humidity) <= 20) humidityColor = "blue";
 
-            statusP.innerHTML = `
-                Temp: <span style="color:${tempColor}; font-weight:bold; font-size:16px;">${temp.value.toFixed(2)}${temp.unit}</span><br>
-                Hum: <span style="color:${humidityColor}; font-weight:bold; font-size:16px;">${Number(sensorData.humidity).toFixed(2)}%</span>
-            `;
             statusP.style.color = 'white';
         } else {
             statusP.innerHTML = 'Offline';
@@ -191,11 +188,11 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
 
     const imgRef = ref(db, `devices/${deviceId}/image`);
 
-get(imgRef).then(snapshot => {
-    if (snapshot.exists()) {
-        deviceImgPreview.src = snapshot.val();
-    }
-});
+    get(imgRef).then(snapshot => {
+        if (snapshot.exists()) {
+            deviceImgPreview.src = snapshot.val();
+        }
+    });
 
 
     const sensorP = document.getElementById('info-sensor');
@@ -368,78 +365,57 @@ function hideAddDeviceForm() {
 }
 
 async function addDevice() {
-    const homeSSIDEl = document.getElementById('home-ssid');
-    const homePasswordEl = document.getElementById('home-password');
-    const deviceNameEl = document.getElementById('device-name');
 
-    const homeSSID = homeSSIDEl ? homeSSIDEl.value : '';
-    const homePassword = homePasswordEl ? homePasswordEl.value : '';
-    const deviceName = (deviceNameEl && deviceNameEl.value) ? deviceNameEl.value : 'My Device';
+    const homeSSID = document.getElementById("home-ssid").value;
+    const homePassword = document.getElementById("home-password").value;
+    const deviceName = document.getElementById("device-name").value || "My Device";
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("Not logged in");
+        return;
+    }
+
+    const uid = user.uid;
 
     try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
 
-        const response = await fetch(`http://${ESP_IP}/data`, {
-            signal: controller.signal
+        const res = await fetch(`http://${PROVISIONING_HOST}/data`);
+        const data = await res.json();
+
+        const deviceId = data.mac.replace(/:/g,'');
+
+        await fetch(`http://${PROVISIONING_HOST}/configure`,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                ssid:homeSSID,
+                password:homePassword,
+                deviceId:deviceId
+            })
         });
 
-        clearTimeout(timeout);
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch data from device');
-        }
-
-        const data = await response.json();
-        const deviceId = data.mac.replace(/:/g, '');
-        const controllable = !!data.controllable;
-
-        const configBody = {
-            ssid: homeSSID,
-            password: homePassword,
-            deviceId: deviceId
-        };
-
-        const configResponse = await fetch(`http://${ESP_IP}/configure`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(configBody)
-        });
-
-        if (!configResponse.ok) throw new Error('Config failed');
-
-        const user = auth.currentUser;
-        if (!user) throw new Error('User not authenticated');
-        const userId = user.uid;
-
-        await set(ref(db, `users/${userId}/devices/${deviceId}`), {
+        // SAVE DEVICE TO FIREBASE
+        await set(ref(db, `users/${uid}/devices/${deviceId}`), {
             name: deviceName,
             mac: data.mac,
-            added: new Date().toISOString(),
-            controllable: controllable
+            controllable: true
         });
 
-        if (controllable) {
-            await set(ref(db, `devices/${deviceId}/control`), {
-                state: false,
-                lastSeen: Math.floor(Date.now() / 1000)
-            });
-        }
+        alert("Device added! Reconnect to internet.");
 
-        hideAddDeviceForm();
-        loadDevices();
-    } catch (error) {
-        const addErrEl = document.getElementById('add-error');
-        if (addErrEl) {
-            if (error.name === "AbortError") {
-                addErrEl.innerText = "Device not reachable (Offline)";
-            } else {
-                addErrEl.innerText = error.message;
-            }
-        }
-        console.error("addDevice error:", error);
+    } catch(err){
+
+        console.error(err);
+        alert("ESP32 not reachable");
+
     }
 }
+
+
 
 async function loadDevices() {
     for (let unsub of unsubscribes) if (typeof unsub === 'function') unsub();
@@ -835,14 +811,12 @@ if (cropBtn && cropImg) {
 }
 
 if (cancelCrop) {
-  cancelCrop.addEventListener('click', () => {
-      hideElement('crop-modal');
-      if (currentURL) {
-          URL.revokeObjectURL(currentURL);
-          currentURL = null;
-      }
-      if (cropType === 'profile' && profileInput) profileInput.value = '';
-      if (cropType === 'device' && deviceImgInput) deviceImgInput.value = '';
-      cropType = null;
-  });
-}
+    cancelCrop.addEventListener('click', () => {
+        hideElement('crop-modal');
+        if (currentURL) {
+            URL.revokeObjectURL(currentURL);
+            currentURL = null;
+        }
+        if (cropType === 'profile' && profileInput) profileInput.value = '';
+    })
+    }
