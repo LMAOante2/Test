@@ -829,7 +829,7 @@ p {
     border-radius: 1.5rem;
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
         inset 0 4px 20px rgba(255, 255, 255, 0.3);
-    right: -100px;
+    right: 20px;
     top: -65px;
     color: white;
     min-width: 160px;
