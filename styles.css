@@ -474,9 +474,11 @@ p {
 
 .add-device {
     border-radius: 12px;
+    position: fixed;
+    top: 0;
     padding: 20px;
     max-width: 900px;
-    max-height: 80%;
+    max-height: 75%;
     margin: 40px auto;
     place-self: center;
     align-self: center;
