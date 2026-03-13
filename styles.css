@@ -1055,10 +1055,6 @@ p {
     .list-item {
         padding: 12px 14px;
     }
-
-    #espFrame {
-        height: 380px !important;
-    }
 }
 
 @media screen and (max-width: 320px) {

@@ -31,6 +31,30 @@ function sendUIDToIframe() {
   }).catch(err => console.error("Failed to get ID token:", err));
 }
 
+document.addEventListener("backbutton", handleBackButton);
+
+function handleBackButton() {
+
+  const currentPage = window.location.pathname.split("/").pop();
+
+  if (currentPage === "profile-details.html") {
+    window.location.href = "index.html";
+    return;
+  }
+
+  if (document.getElementById("info-screen")?.style.display !== "none") {
+    showMainScreen();
+    return;
+  }
+
+  if (currentPage === "index.html") {
+    if (window.Capacitor?.Plugins?.App) {
+      window.Capacitor.Plugins.App.exitApp();
+    }
+  }
+}
+
+
 window.deleteDevice = async function() {
   if (!confirm("Delete this device permanently from your account?")) return;
 
@@ -662,8 +686,6 @@ function loadProfileImage() {
         let name = nameSnap.exists() ? nameSnap.val() : "";
         let surname = surnameSnap.exists() ? surnameSnap.val() : "";
         let fullName = `${name} ${surname}`.trim();
-
-        // Google fallback (instant name even before DB write)
         if (!fullName && user.displayName) {
             fullName = user.displayName;
         }
@@ -672,11 +694,10 @@ function loadProfileImage() {
             showname.innerText = fullName || user.email || "User";
         }
 
-        // Image: DB first, then Google photo, then default
         if (imageSnap.exists() && profilePreview) {
             profilePreview.src = imageSnap.val();
         } else if (user.photoURL && profilePreview) {
-            profilePreview.src = user.photoURL;   // ← Google picture appears instantly
+            profilePreview.src = user.photoURL;  
         } else if (profilePreview) {
             profilePreview.src = "default-profile.png";
         }
