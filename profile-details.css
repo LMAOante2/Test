@@ -38,12 +38,12 @@ body {
     bottom: 0;
     width: 100%;
     height: 50px;
+    background: rgb(27, 0, 70);
     display: flex;
     flex-direction: row;
     text-align: center;
     place-content: center;
     transition: all 0.3s ease;
-    background: rgba(0, 102, 255, 0.144);
 }
 
 .footer button {
@@ -52,11 +52,12 @@ body {
     width: 30px;
     text-align: center;
     margin: 0 10px;
+    background: none;
     height: 30px;
     place-content: center;
+    background: black;
     align-items: center;
     display: flex;
-    background: none;
 }
 
 ::-webkit-scrollbar {
@@ -86,12 +87,7 @@ body {
 .footeri {
     border: 0.5px solid white;
     padding: 10px;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
+    background: #007bff;
     border-radius: 4px;
     transition: all 0.3s ease;
 }
@@ -107,14 +103,25 @@ button {
 }
 
 button {
-    background-color: #007bff;
+    position: relative;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(2px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 2rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
+        inset 0 4px 20px rgba(255, 255, 255, 0.3);
     color: white;
     border: none;
     cursor: pointer;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background: rgba(255, 255, 255, 0.329);
+    backdrop-filter: blur(2px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.863);
+    border-radius: 2rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.514),
+        inset 0 4px 20px rgba(255, 255, 255, 0.486);
 }
 
 h1,
@@ -124,12 +131,7 @@ h2 {
 }
 
 .device-item {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
+    background: #025adf;
     color: white;
     padding: 10px;
     margin: 10px 0;
@@ -288,18 +290,8 @@ p {
     position: fixed;
     top: 0px;
     background: none;
-    width: 40px;
-    height: 40px;
-    text-align: center;
-    place-content: center;
-    align-items: center;
+    width: 30px;
     right: 20px;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
 }
 
 .adddevicebtn:hover {
@@ -598,13 +590,6 @@ p {
 
 .profile-card {
     margin: 0 16px 20px;
-    position: relative;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
     border-radius: 20px;
     padding: 16px;
     display: flex;
@@ -633,7 +618,7 @@ p {
 .profile-name {
     font-size: 20px;
     font-weight: 600;
-    color: white;
+    color: #000;
 }
 
 .profile-title {
@@ -669,7 +654,7 @@ p {
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    color: white;
+    color: #000;
     cursor: pointer;
 }
 
@@ -718,7 +703,7 @@ p {
     margin-left: 16px;
     font-size: 17px;
     font-weight: 500;
-    color: white;
+    color: #000;
 }
 
 .deactivate .list-text,
@@ -753,7 +738,24 @@ p {
     transition: all 0.3s ease;
 }
 
-#loader1 {
+.passwordtxt {
+    -webkit-text-security: disc;
+    -moz-text-security: disc;
+    text-security: disc;
+}
+
+.resetbtn {
+    max-width: 100px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(2px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 2rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
+        inset 0 4px 20px rgba(255, 255, 255, 0.3);
+}
+
+#loader {
     position: fixed;
     top: 0;
     left: 0;
@@ -792,14 +794,54 @@ p {
     }
 }
 
-.dropbtn {
-    top: 0;
-    right: 20px;
+.backbtn {
+    rotate: 180deg;
     width: 40px;
     height: 40px;
-    text-align: center;
     place-content: center;
     align-items: center;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(2px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 2rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
+        inset 0 4px 20px rgba(255, 255, 255, 0.3);
+}
+
+
+
+.backbtn:hover {
+    background: none;
+}
+
+.backbtn .chevron {
+    color: rgb(0, 0, 0);
+}
+
+.deleteacc {
+    color: red;
+    text-align: left;
+}
+
+.delteaccicon {
+    color: red;
+}
+
+.popup {
+    width: 350px;
+    color: white;
+    padding: 20px;
+    height: 200px;
+    padding: 20px;
+    top: 0;
+    place-self: center;
+    align-self: center;
+    display: flex;
+    justify-self: center;
     position: fixed;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(2px) saturate(180%);
@@ -807,110 +849,23 @@ p {
     border-radius: 2rem;
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
         inset 0 4px 20px rgba(255, 255, 255, 0.3);
+    z-index: 300;
 }
 
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-
-.dropdown-content {
+.overpopup {
     display: none;
-    position: absolute;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
-    right: 20px;
-    top: -65px;
-    color: white;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-    transition: all 0.3s ease;
-}
-
-.show {
-    display: block;
-}
-
-.dropdown-content button {
-    display: block;
-    padding: 10px;
-    text-decoration: none;
-    background: none;
     width: 100%;
     height: 100%;
-    color: white;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.3s ease;
+    margin: 0;
+    top: 0;
+    position: fixed;
+    background: rgba(173, 173, 173, 0.5);
+    z-index: 1;
 }
 
-.dropdown-content button:hover {
-    color: white;
-    transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
-}
-
-.google {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    position: relative;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
-}
-
-#loginbtn {
-    position: relative;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
-}
-
-#loginbtn:hover,
-#signupbtn:hover {
-    position: relative;
-    background: rgba(255, 255, 255, 0.226);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.479),
-        inset 0 4px 20px rgba(255, 255, 255, 0.507);
-}
-
-#signupbtn {
-    position: relative;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
-}
-
-.resetbtn {
-    position: relative;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(2px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-        inset 0 4px 20px rgba(255, 255, 255, 0.3);
+.closepopup {
+    position: fixed;
+    bottom: 0;
+    width: 90%;
+    text-align: center;
 }

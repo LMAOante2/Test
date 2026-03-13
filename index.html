@@ -7,9 +7,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-  <!-- Pull-to-refresh container (keeps inside body) -->
+  <div id="loader1">
+  <div class="spinner"></div>
+</div>
+
   <div id="ptr-container" style="top:-80px; position:relative;">
     <div class="ptr-spinner"></div>
   </div>
@@ -17,11 +21,16 @@
   <div id="app">
     <div id="login-screen">
       <h1>Login</h1>
+      <input style="display: none;" type="text" id="name" placeholder="Name">
+      <input style="display: none;" type="text" id="surname" placeholder="Surname">
       <input type="email" id="email" placeholder="Email">
       <input type="password" id="password" placeholder="Password">
-      <button onclick="login()">Login</button>
-      <button onclick="signup()">Sign Up</button>
-      <button onclick="resetPassword()">Reset Password</button>
+      <p class="noaccountbtn" id="noaccounttxt">Dont have an account yet? <button onclick="makeaccount()">Make one!</button></p>
+      <p style="display: none;" class="accountbtn" id="accounttxt">Already have an account? <button onclick="loginbtn()">Login</button></p>
+      <button onclick="login()" id="loginbtn">Login</button>
+      <button onclick="signup()" id="signupbtn" style="display: none;">Sign Up</button>
+      <button onclick="resetPassword()" class="resetbtn">Reset Password</button>
+      <button onclick="signInWithGoogle()" class="google"><i class="fa-brands fa-google "></i></button>
       <p id="auth-error"></p>
     </div>
 
@@ -33,59 +42,91 @@
         <input type="file" id="device-img-input" accept="image/*" style="display:none;">
       </div>
       <p id="device-image-error"></p>
-      <p id="info-sensor"></p>
-      <div id="control-section" style="display:none;">
-        <button id="toggle-button">Toggle</button>
-      </div>
+<p id="info-sensor"></p>
+<div id="control-section" style="display:none;">
+  <h4 style="color: white;">Status:<span style="margin-left: 10px;" id="status"></span></h4>
+  <button id="toggle-button">Toggle</button>
+</div>
+
+<div id="dropdown-content" class="dropdown-content">
+  <button onclick="deleteDevice()" >Delete Device</button>
+</div>
+
+<button onclick="toggleDropdown()" class="dropbtn"><i class="fa-solid fa-ellipsis-vertical" style="color: rgb(0, 0, 0);"></i></button>
+
       <button class="back" onclick="showMainScreen()"><i class="fa-solid fa-arrow-left backicon"></i></button>
     </div>
 
     <div id="main-screen" style="display:none;">
       <div id="device-list"></div>
 
-      <div id="add-device-modal" style="display:none;">
-        <h2>Add Device</h2>
-        <input type="text" id="home-ssid" placeholder="Home WiFi SSID">
-        <div class="password-container">
-          <input type="password" id="home-password" placeholder="Home WiFi Password">
-          <i class="fa-solid fa-eye toggle-password"></i>
-        </div>
-        <input type="text" id="device-name" placeholder="Device Name (optional)">
-        <button onclick="addDevice()">Submit</button>
-        <button onclick="hideAddDeviceForm()">Cancel</button>
-        <p id="add-error"></p>
-      </div>
-    </div>
+<div id="add-device-modal" style="display: none;">
+    <div class="add-device">
+<h2>Add Device</h2>
 
-    <div id="settings-screen" style="display:none;">
-      <h2>Settings</h2>
+<button id="setupBtn">Setup Device</button>
 
-      <section class="settings-section">
-        <h3>Profile Picture</h3>
-        <div class="profile-image-container">
-          <img id="profile-img-preview" src="default-profile.png" alt="Profile Image">
-          <label for="profile-img-input" class="upload-label"><i class="fa-solid fa-camera"></i></label>
-          <input type="file" id="profile-img-input" accept="image/*" style="display:none;">
-        </div>
-        <p id="profile-error"></p>
-      </section>
+<br><br>
 
-      <section class="settings-section">
-        <h3>Temperature Unit</h3>
-        <div class="units">
-          <input style="display:none;" checked type="checkbox" id="celsius">
-          <input style="display:none;" type="checkbox" id="fahrenheit">
-          <p>°C</p><label for="celsius" class="icon"><span class="box"><i class="fa-solid fa-check check"></i></span></label>
-          <p>°F</p><label for="fahrenheit" class="icon1"><span class="box1"><i class="fa-solid fa-check check1"></i></span></label>
-        </div>
-      </section>
+<iframe 
+id="espFrame"
+style="width:100%;height:500px;border:none;">
+</iframe>
 
-      <section class="settings-section">
-        <h3>Account</h3>
-        <button class="logoutbtn" onclick="logout()">Logout</button>
-      </section>
+<button onclick="hideAddDeviceForm()" class="close-add-device-btn">Close</button>
+
     </div>
   </div>
+  </div>
+
+
+      <div id="settings-screen" style="display: none;">
+        <div class="settings-header">
+          <div class="header-title">Settings</div>
+        </div>
+        <div class="section-label">Profile settings</div>
+        <div class="profile-card">
+          <div class="profile-image-container">
+            <img id="profile-img-preview" src="default-profile.png" alt="Profile Image">
+            <label for="profile-img-input" class="upload-label"><i class="fa-solid fa-camera"></i></label>
+            <input type="file" id="profile-img-input" accept="image/*" style="display:none;">
+          </div>
+          <div class="profile-info">
+            <div id="showname" class="profile-name"></div>
+          </div>
+          <i class="fa-solid fa-chevron-right chevron"></i>
+        </div>
+        <p id="profile-error"></p>
+
+        <div class="section-label">Profile</div>
+        <div class="list-card">
+          <div onclick="profilesettings()" class="list-item">
+            <i class="fa-solid fa-user list-icon"></i>
+            <span class="list-text">Profile</span>
+            <i class="fa-solid fa-chevron-right chevron"></i>
+          </div>
+        </div>
+
+        <div class="section-label">About</div>
+        <div class="list-card">
+          <div class="list-item">
+            <i class="fa-solid fa-circle-info list-icon" style="color:#ffffff;"></i>
+            <span class="list-text">About application</span>
+            <i class="fa-solid fa-chevron-right chevron"></i>
+          </div>
+        </div>
+
+        <div class="section-label">Help</div>
+        <div class="list-card">
+          <div class="list-item">
+            <i class="fa-solid fa-circle-question list-icon"></i>
+            <span class="list-text">Help</span>
+            <i class="fa-solid fa-chevron-right chevron"></i>
+          </div>
+        </div>
+
+
+      </div>
 
   <div id="crop-modal" style="display:none;">
     <div class="crop-container">
@@ -95,16 +136,18 @@
     <button id="cancel-crop">Cancel</button>
   </div>
 
-  <button onclick="showAddDeviceForm()" class="adddevicebtn" id="addevicebtn"><i class="fa-solid fa-plus addicon"></i></button>
+  <button onclick="showAddDeviceForm()" class="adddevicebtn" id="addevicebtn">
+    <i class="fa-solid fa-plus addicon"></i>
+  </button>
 
   <footer id="footer" class="footer" style="display:none;">
     <button id="homebtn" onclick="showMainScreen()"><i class="fa-solid fa-house footeri"></i></button>
     <button id="settingsbtn" onclick="settings()"><i class="fa-solid fa-gear footeri"></i></button>
   </footer>
 
-  <!-- firebase.js must export the things your app expects -->
+
   <script type="module" src="firebase.js"></script>
-  <!-- your application code -->
   <script type="module" src="app.js"></script>
+
 </body>
 </html>

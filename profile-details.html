@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Devices</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="profile-details.css">
+</head>
+  <script src="screens.js"></script>
+<body>
+<div id="loader">
+  <div class="spinner"></div>
+</div>
+
+<button class="backbtn" onclick="backsettings()"><i class="fa-solid fa-chevron-right chevron"></i></button>
+
+
+      <div id="settings-scree">
+        <div class="settings-header">
+          <div class="header-title">Profile</div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-image-container">
+            <img id="profile-img-preview" src="default-profile.png" alt="Profile Image">
+            <label for="profile-img-input" class="upload-label"><i class="fa-solid fa-camera"></i></label>
+            <input type="file" id="profile-img-input" accept="image/*" style="display:none;">
+          </div>
+        </div>
+        <p id="profile-error"></p>
+
+        <div class="section-label">Name</div>
+
+        <div class="list-card">
+          <div class="list-item">
+            <i class="fa-solid fa-user list-icon"></i>
+            <span id="showname" class="list-text">Profile details</span>
+          </div>
+        </div>
+
+        <div class="section-label">Email</div>
+        <div class="list-card">
+          <div class="list-item">
+            <i class="fa-solid fa-user list-icon"></i>
+            <span id="showemail" class="list-text">Email</span>
+          </div>
+        </div>
+
+        <div class="section-label">Password</div>
+        <div class="list-card">
+          <div class="list-item">
+            <i class="fa-solid fa-user list-icon"></i>
+            <span class="list-text passwordtxt">Password</span>
+            <button class="resetbtn" id="resetPasswordBtn" onclick="resetPassword()">Reset</button>
+          </div>
+        </div>
+
+        <div class="section-label">Account</div>
+        <div class="list-card">
+          <div onclick="logout()" class="list-item">
+            <i class="fa-solid fa-arrow-right-from-bracket list-icon delteaccicon"></i>
+            <span class="list-text deleteacc">Logout</span>
+          </div>
+        </div>
+        <div class="list-card">
+          <div class="list-item">
+            <i class="fa-solid fa-trash-can list-icon delteaccicon"></i>
+            <span class="list-text deleteacc">Delete my account</span>
+          </div>
+        </div>
+        <div id="overpopup" class="overpopup">
+        <div class="popup" id="popup">
+          <h3 id="error"></h3>
+          <button class="closepopup" onclick="closepopup()">Close</button>
+        </div>
+        </div>
+
+  <div id="crop-modal" style="display:none;">
+    <div class="crop-container">
+      <img id="crop-img" src="" alt="">
+    </div>
+    <button id="crop-btn">Upload</button>
+    <button id="cancel-crop">Cancel</button>
+  </div>
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>

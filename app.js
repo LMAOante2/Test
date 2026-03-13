@@ -3,15 +3,52 @@ import {
   db,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   ref,
   set,
   onValue,
-  get
+  get,
+  onChildAdded,
+  onAuthStateChanged,
+  GoogleAuthProvider,    
+  signInWithPopup    
 } from './firebase.js';
 
-const PROVISIONING_TOKEN = "AB12CD34";           // ← must match ESP32 sketch
-const PROVISIONING_HOST = "esp-device.local";    // mDNS name from ESP
-const PROVISIONING_TIMEOUT_MS = 5000;
+let activeScreen = 'main';
+
+const iframe = document.getElementById('espFrame');
+
+function sendUIDToIframe() {
+  const user = auth.currentUser;
+  if (!user || !iframe || !iframe.contentWindow) return;
+
+  user.getIdToken().then(token => {
+    iframe.contentWindow.postMessage({ 
+      uid: user.uid,
+      idToken: token 
+    }, "*");
+    console.log("UID + ID TOKEN sent to ESP32 iframe");
+  }).catch(err => console.error("Failed to get ID token:", err));
+}
+
+window.deleteDevice = async function() {
+  if (!confirm("Delete this device permanently from your account?")) return;
+
+  const user = auth.currentUser;
+  if (!user || !currentDeviceId) return;
+
+  try {
+    await set(ref(db, `users/${user.uid}/devices/${currentDeviceId}`), null);
+    await set(ref(db, `devices/${currentDeviceId}`), null);
+
+    alert("Device deleted successfully!");
+    showMainScreen();
+    loadDevices();
+  } catch (err) {
+    alert("Delete failed: " + err.message);
+  }
+};
+
 
 const celsius = document.getElementById("celsius");
 const fahrenheit = document.getElementById("fahrenheit");
@@ -127,7 +164,10 @@ function settings() {
     infoInterval = null;
     for (let unsub of infoUnsubscribes) if (typeof unsub === 'function') unsub();
     infoUnsubscribes = [];
+
+    loadProfileImage();
 }
+
 
 const offlineThreshold = 30;
 
@@ -154,7 +194,7 @@ function updateDeviceStatus(deviceId) {
             statusP.style.color = 'red';
         } else {
             const stateColor = state ? "green" : "red";
-            statusP.innerHTML = `LED: <span style="color:${stateColor}; font-weight:bold; font-size:16px;">${state ? 'ON' : 'OFF'}</span>`;
+            statusP.innerHTML = `Status: <span style="color:${stateColor}; font-weight:bold; font-size:16px;">${state ? 'ON' : 'OFF'}</span>`;
             statusP.style.color = 'white';
         }
     } else {
@@ -209,6 +249,8 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
         const stateRef = ref(db, `devices/${deviceId}/control/state`);
         const lastSeenRef = ref(db, `devices/${deviceId}/control/lastSeen`);
         const toggleBtn = document.getElementById('toggle-button');
+        const status = document.getElementById('status');
+        
         if (!toggleBtn) return;
 
         let currentState = false;
@@ -224,12 +266,16 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
                 toggleBtn.disabled = false;
             }
         };
-
+        
         const stateUnsub = onValue(stateRef, (stateSnap) => {
             currentState = !!stateSnap.val();
             controlStates.set(deviceId, currentState);
             updateButton();
             updateDeviceStatus(deviceId);
+            const stateColor = currentState ? "green" : "red";
+            status.innerText = `${currentState ? 'ON' : 'OFF'}`;
+            status.style.color = stateColor;
+            
         });
         infoUnsubscribes.push(stateUnsub);
 
@@ -239,8 +285,8 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
             controlLastSeens.set(deviceId, val);
 
             currentOnline = typeof val === "number" && (Date.now()/1000 - val) < offlineThreshold;
-            updateDeviceStatus(deviceId);
             updateButton();
+            updateDeviceStatus(deviceId);
         });
         infoUnsubscribes.push(lastSeenUnsub);
 
@@ -343,79 +389,94 @@ function login() {
 }
 
 function signup() {
+    const nameEl = document.getElementById('name');
+    const surnameEl = document.getElementById('surname');
     const emailEl = document.getElementById('email');
     const passEl = document.getElementById('password');
+
+    const name = nameEl ? nameEl.value : '';
+    const surname = surnameEl ? surnameEl.value : '';
     const email = emailEl ? emailEl.value : '';
     const password = passEl ? passEl.value : '';
 
     createUserWithEmailAndPassword(auth, email, password)
-        .then(() => showMainScreen())
+        .then((userCredential) => {
+
+            const user = userCredential.user;
+            return set(ref(db, `users/${user.uid}/profile`), {
+                name: name,
+                surname: surname,
+                email: email
+            });
+
+        })
+        .then(() => {
+            showMainScreen();
+        })
         .catch((error) => {
             const errEl = document.getElementById('auth-error');
             if (errEl) errEl.innerText = error.message;
         });
 }
 
-function showAddDeviceForm() {
+function signInWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    signInWithPopup(auth, provider)
+        .then((result) => {
+            const user = result.user;
+            const isNewUser = result.additionalUserInfo?.isNewUser || false;
+
+            if (isNewUser) {
+                const nameParts = (user.displayName || "").trim().split(" ");
+                const firstName = nameParts[0] || "";
+                const lastName = nameParts.slice(1).join(" ") || "";
+
+                set(ref(db, `users/${user.uid}/profile`), {
+                    name: firstName,
+                    surname: lastName,
+                    email: user.email || ""
+                });
+
+                if (user.photoURL) {
+                    set(ref(db, `users/${user.uid}/profileImage`), user.photoURL);
+                }
+            }
+
+            console.log("Google sign-in successful", user.email);
+        })
+        .catch((error) => {
+            const errEl = document.getElementById('auth-error');
+            if (errEl) errEl.innerText = error.message;
+            console.error("Google sign-in error:", error);
+        });
+}
+
+
+window.showAddDeviceForm = function() {
     showElement('add-device-modal');
-}
+    document.body.classList.add("no-overflow");
+};
 
-function hideAddDeviceForm() {
+window.hideAddDeviceForm = function() {
     hideElement('add-device-modal');
+    document.body.classList.remove("no-overflow");
+};
+
+
+function logout() {
+    auth.signOut().then(() => {
+        clearAllListeners();
+        showElement('login-screen');
+        hideElement('main-screen');
+        hideElement('info-screen');
+        hideElement('settings-screen');
+        hideElement('addevicebtn');
+        hideElement('footer');
+        window.location.href = 'index.html';
+    });
 }
-
-async function addDevice() {
-
-    const homeSSID = document.getElementById("home-ssid").value;
-    const homePassword = document.getElementById("home-password").value;
-    const deviceName = document.getElementById("device-name").value || "My Device";
-
-    const user = auth.currentUser;
-
-    if (!user) {
-        alert("Not logged in");
-        return;
-    }
-
-    const uid = user.uid;
-
-    try {
-
-        const res = await fetch(`http://${PROVISIONING_HOST}/data`);
-        const data = await res.json();
-
-        const deviceId = data.mac.replace(/:/g,'');
-
-        await fetch(`http://${PROVISIONING_HOST}/configure`,{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                ssid:homeSSID,
-                password:homePassword,
-                deviceId:deviceId
-            })
-        });
-
-        // SAVE DEVICE TO FIREBASE
-        await set(ref(db, `users/${uid}/devices/${deviceId}`), {
-            name: deviceName,
-            mac: data.mac,
-            controllable: true
-        });
-
-        alert("Device added! Reconnect to internet.");
-
-    } catch(err){
-
-        console.error(err);
-        alert("ESP32 not reachable");
-
-    }
-}
-
-
 
 async function loadDevices() {
     for (let unsub of unsubscribes) if (typeof unsub === 'function') unsub();
@@ -451,8 +512,7 @@ async function loadDevices() {
             deviceDiv.className = 'device-item';
 
             deviceDiv.innerHTML = `
-                <img id="img-${deviceId}" src="default-device.png" alt="Device Image" class="device-img">
-                <h3>${deviceData.name}</h3>
+                <span class:"device-layout"><img id="img-${deviceId}" src="default-device.png" alt="Device Image" class="device-img"><h3>${deviceData.name}</h3></span>
                 <p id="status-${deviceId}"></p>
             `;
 
@@ -462,7 +522,6 @@ async function loadDevices() {
             activeDeviceIds.push(deviceId);
             deviceIsControllable.set(deviceId, !!deviceData.controllable);
 
-            // Load device image
             const imgRef = ref(db, `devices/${deviceId}/image`);
             get(imgRef).then(imgSnapshot => {
                 const imgEl = document.getElementById(`img-${deviceId}`);
@@ -520,132 +579,12 @@ function clearAllListeners() {
     controlLastSeens.clear();
 }
 
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        showMainScreen();
-        loadProfileImage();
-    } else {
-        clearAllListeners();
-        showElement('login-screen');
-        hideElement('main-screen');
-        hideElement('settings-screen');
-        hideElement('info-screen');
-        hideElement('addevicebtn');
-        hideElement('footer');
-    }
-});
+let currentDeviceId = null;
+let cropType = null;
+let currentURL = null;
 
-function logout() {
-    auth.signOut().then(() => {
-        clearAllListeners();
-        showElement('login-screen');
-        hideElement('main-screen');
-        hideElement('info-screen');
-        hideElement('settings-screen');
-        hideElement('addevicebtn');
-        hideElement('footer');
-    });
-}
-
-window.login = login;
-window.logout = logout;
-window.signup = signup;
-window.showAddDeviceForm = showAddDeviceForm;
-window.hideAddDeviceForm = hideAddDeviceForm;
-window.addDevice = addDevice;
-window.showMainScreen = showMainScreen;
-window.settings = settings;
-window.renameDevice = renameDevice;
-
-const eye = document.querySelector('.toggle-password');
-const passwordInput = document.getElementById('home-password');
-
-if (eye && passwordInput) {
-  eye.addEventListener('click', () => {
-      if (passwordInput.type === 'password') {
-          passwordInput.type = 'text';
-          eye.classList.remove('fa-eye');
-          eye.classList.add('fa-eye-slash');
-      } else {
-          passwordInput.type = 'password';
-          eye.classList.remove('fa-eye-slash');
-          eye.classList.add('fa-eye');
-      }
-  });
-}
-
-let ptrStartY = 0;
-let ptrReady = false;
-let ptrTriggered = false;
-
-const ptr = document.getElementById('ptr-container');
-
-document.addEventListener('touchstart', e => {
-  if (window.scrollY === 0) {
-    ptrStartY = e.touches[0].clientY;
-    ptrReady = true;
-    ptrTriggered = false;
-  } else {
-    ptrReady = false;
-  }
-});
-
-document.addEventListener('touchmove', e => {
-  if (!ptrReady || !ptr) return;
-
-  const diff = e.touches[0].clientY - ptrStartY;
-
-  if (diff > 0) {
-    e.preventDefault();
-
-    const elastic = Math.min(diff / 2, 80);
-    ptr.style.top = (-80 + elastic) + 'px';
-
-    ptrTriggered = diff > 90;
-  }
-}, { passive: false });
-
-document.addEventListener('touchend', () => {
-  if (!ptrReady || !ptr) return;
-
-  if (ptrTriggered) {
-    ptr.style.top = '0px';
-    refresh();
-    loadProfileImage();
-
-    setTimeout(() => {
-      ptr.style.top = '-80px';
-    }, 1200);
-  } else {
-    ptr.style.top = '-80px';
-  }
-
-  ptrReady = false;
-  ptrTriggered = false;
-});
-
-function refresh() {
-    loadDevices();
-    vibrate();
-}
-
-const profileInput = document.getElementById('profile-img-input');
-const profilePreview = document.getElementById('profile-img-preview');
-const profileError = document.getElementById('profile-error');
-
-function loadProfileImage() {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const userId = user.uid;
-    const userRef = ref(db, `users/${userId}/profileImage`);
-    get(userRef).then(snapshot => {
-        if (snapshot.exists()) {
-            if (profilePreview) profilePreview.src = snapshot.val();
-        }
-    }).catch(err => {
-        console.log("Failed to load profile image:", err);
-    });
+function setCurrentDevice(deviceId) {
+    currentDeviceId = deviceId;
 }
 
 const cropModal = document.getElementById('crop-modal');
@@ -653,7 +592,6 @@ const cropImg = document.getElementById('crop-img');
 const cropBtn = document.getElementById('crop-btn');
 const cancelCrop = document.getElementById('cancel-crop');
 
-let currentURL = null;
 let isDragging = false;
 let startX, startY, startLeft, startTop;
 
@@ -697,15 +635,53 @@ document.addEventListener('touchmove', drag, {passive: false});
 document.addEventListener('mouseup', endDrag);
 document.addEventListener('touchend', endDrag);
 
+const profileInput = document.getElementById('profile-img-input');
+const profilePreview = document.getElementById('profile-img-preview');
+const profileError = document.getElementById('profile-error');
+
 const deviceImgInput = document.getElementById("device-img-input");
 const deviceImgPreview = document.getElementById("device-img-preview");
 const deviceImgError = document.getElementById("device-image-error");
 
-let currentDeviceId = null;
-let cropType = null;
+function loadProfileImage() {
+    const user = auth.currentUser;
+    if (!user) return;
 
-function setCurrentDevice(deviceId) {
-    currentDeviceId = deviceId;
+    const showname = document.getElementById("showname");
+    const profilePreview = document.getElementById("profile-img-preview");
+    const userId = user.uid;
+
+    const nameRef = ref(db, `users/${userId}/profile/name`);
+    const surnameRef = ref(db, `users/${userId}/profile/surname`);
+    const imageRef = ref(db, `users/${userId}/profileImage`);
+
+    Promise.all([get(nameRef), get(surnameRef), get(imageRef)]).then(([nameSnap, surnameSnap, imageSnap]) => {
+        let name = nameSnap.exists() ? nameSnap.val() : "";
+        let surname = surnameSnap.exists() ? surnameSnap.val() : "";
+        let fullName = `${name} ${surname}`.trim();
+
+        // Google fallback (instant name even before DB write)
+        if (!fullName && user.displayName) {
+            fullName = user.displayName;
+        }
+
+        if (showname) {
+            showname.innerText = fullName || user.email || "User";
+        }
+
+        // Image: DB first, then Google photo, then default
+        if (imageSnap.exists() && profilePreview) {
+            profilePreview.src = imageSnap.val();
+        } else if (user.photoURL && profilePreview) {
+            profilePreview.src = user.photoURL;   // ← Google picture appears instantly
+        } else if (profilePreview) {
+            profilePreview.src = "default-profile.png";
+        }
+    }).catch(err => {
+        console.log("Profile load error (using fallback):", err);
+        if (showname) showname.innerText = user.displayName || user.email || "User";
+        if (profilePreview && user.photoURL) profilePreview.src = user.photoURL;
+    });
 }
 
 if (profileInput && cropImg) {
@@ -819,4 +795,280 @@ if (cancelCrop) {
         }
         if (cropType === 'profile' && profileInput) profileInput.value = '';
     })
+}
+
+let ptrStartY = 0;
+let ptrReady = false;
+let ptrTriggered = false;
+
+const ptr = document.getElementById('ptr-container');
+
+document.addEventListener('touchstart', e => {
+  if (window.scrollY === 0) {
+    ptrStartY = e.touches[0].clientY;
+    ptrReady = true;
+    ptrTriggered = false;
+  } else {
+    ptrReady = false;
+  }
+});
+
+document.addEventListener('touchmove', e => {
+  if (!ptrReady || !ptr) return;
+
+  const diff = e.touches[0].clientY - ptrStartY;
+
+  if (diff > 0) {
+    e.preventDefault();
+
+    const elastic = Math.min(diff / 2, 80);
+    ptr.style.top = (-80 + elastic) + 'px';
+
+    ptrTriggered = diff > 90;
+  }
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
+  if (!ptrReady || !ptr) return;
+
+  if (ptrTriggered) {
+    ptr.style.top = '0px';
+    refresh();
+    loadProfileImage();
+
+    setTimeout(() => {
+      ptr.style.top = '-80px';
+    }, 1200);
+  } else {
+    ptr.style.top = '-80px';
+  }
+
+  ptrReady = false;
+  ptrTriggered = false;
+});
+
+function refresh() {
+    loadDevices();
+    vibrate();
+}
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        if (activeScreen !== 'settings') {
+            showMainScreen();
+        }
+        loadProfileImage();
+        setTimeout(hideLoader1, 500);
+    } else {
+        clearAllListeners();
+        showElement('login-screen');
+        hideElement('loader1')
+        hideElement('main-screen');
+        hideElement('settings-screen');
+        hideElement('info-screen');
+        hideElement('addevicebtn');
+        hideElement('footer');
     }
+});
+
+
+window.login = login;
+window.logout = logout;
+window.signup = signup;
+window.showAddDeviceForm = showAddDeviceForm;
+window.hideAddDeviceForm = hideAddDeviceForm;
+window.showMainScreen = showMainScreen;
+window.settings = settings;
+window.renameDevice = renameDevice;
+window.deleteDevice = deleteDevice;
+window.makeaccount = makeaccount;
+window.loginbtn = loginbtn;
+window.hideLoader = hideLoader;
+window.backsettings = backsettings;
+window.profilesettings = profilesettings;
+window.hideLoader1 = hideLoader1;
+window.toggleDropdown = toggleDropdown;
+window.resetPassword = resetPassword;
+window.closepopup = closepopup;
+
+
+
+const frame = document.getElementById("espFrame");
+const setupBtn = document.getElementById("setupBtn");
+const deviceList = document.getElementById("deviceList");
+
+function loadPortal(){
+  frame.src = "http://192.168.4.1";
+  
+  setTimeout(sendUIDToIframe, 800);
+  setTimeout(sendUIDToIframe, 2000);
+  setTimeout(sendUIDToIframe, 3500);
+}
+
+if(setupBtn){
+  setupBtn.addEventListener("click", loadPortal);
+}
+
+
+
+function listenForDevices(){
+
+  const devicesRef = ref(db,"devices");
+
+  onChildAdded(devicesRef,(snapshot)=>{
+
+    const deviceId = snapshot.key;
+    const device = snapshot.val();
+
+    console.log("Device detected:", deviceId);
+
+    addDeviceToUI(deviceId, device);
+
+  });
+
+}
+
+
+function addDeviceToUI(deviceId, device) {
+    const user = auth.currentUser;
+    if (!user) {
+        console.log("User not ready yet, will claim later for", deviceId);
+        return;
+    }
+
+    console.log("Device detected:", deviceId);
+    claimDevice(deviceId);
+}
+
+
+
+
+
+async function claimDevice(deviceId){
+  const user = auth.currentUser;
+  if(!user){
+    console.log("Login required");
+    return;
+  }
+
+  try {
+    await set(ref(db,"users/"+user.uid+"/devices/"+deviceId), {
+      name: "My Device",
+      claimed: true
+    });
+    console.log("Device added to user:", deviceId);
+    loadDevices();
+  } catch(err) {
+    console.error("Failed to claim device:", err);
+  }
+}
+
+
+
+onAuthStateChanged(auth,(user)=>{
+
+  if(user){
+
+      console.log("Logged in:", user.uid);
+      listenForDevices();
+          document.getElementById("showname").textContent = user.displayName || "No name";
+      document.getElementById("showemail").textContent = user.email || "No email";
+
+    }
+    hideLoader();
+
+});
+
+function makeaccount() {
+    showElement('name');
+    showElement('surname');
+    showElement('signupbtn');
+    hideElement('loginbtn');
+    showElement('accounttxt');
+    hideElement('noaccounttxt');
+}
+
+function loginbtn() {
+    hideElement('name');
+    hideElement('surname');
+    hideElement('signupbtn');
+    showElement('loginbtn');
+    hideElement('accounttxt');
+    showElement('noaccounttxt');
+}
+
+function hideLoader(){
+  document.getElementById("loader").style.display = "none";
+}
+
+function hideLoader1(){
+  document.getElementById("loader1").style.display = "none";
+}
+
+
+function backsettings() {
+
+    window.location.href = 'index.html';
+}
+
+function profilesettings() {
+    window.location.href = 'profile-details.html';
+}
+
+function toggleDropdown() {
+  document.getElementById("dropdown-content").classList.toggle("show");
+}
+
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+    let dropdown = document.getElementById("dropdown-content");
+    if (dropdown.classList.contains('show')) {
+      dropdown.classList.remove('show');
+    }
+  }
+}
+
+function resetPassword() {
+    const user = auth.currentUser;
+    const error = document.getElementById('error');
+    const overpopup = document.getElementById('overpopup');
+
+    if (user && user.email) {
+        sendPasswordResetEmail(auth, user.email)
+            .then(() => {
+                overpopup.style.display = "block";
+                error.innerText = `Password reset email sent to ${user.email}. Check your inbox.`;
+            })
+            .catch((error) => {
+                overpopup.style.display = "block";
+                error.innerText = `Failed to send reset email: ${error.message}`;
+                console.error(error);
+            });
+    } else {
+        const email = prompt("Enter your email address");
+        if (!email) return;
+
+        sendPasswordResetEmail(auth, email)
+            .then(() => {
+                alert(`Password reset email sent to ${email}.`);
+            })
+            .catch((error) => {
+                alert("Failed to send reset email: " + error.message);
+                console.error(error);
+            });
+    }
+}
+
+window.resetPassword = resetPassword;
+
+function closepopup() {
+    const error = document.getElementById('error');
+    const overpopup = document.getElementById('overpopup');
+    overpopup.style.display = "none";
+    error.innerText = "";
+}
+
+
+window.signInWithGoogle = signInWithGoogle;
+
+
