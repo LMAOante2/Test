@@ -930,3 +930,166 @@ p {
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
         inset 0 4px 20px rgba(255, 255, 255, 0.3);
 }
+
+
+@media screen and (max-width: 1024px) {
+    .add-device {
+        max-width: 95%;
+        margin: 20px auto;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .device-layout {
+        flex-direction: column;
+    }
+
+    #settings-screen {
+        padding: 15px;
+    }
+
+    .profile-card {
+        margin: 0 12px 15px;
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .list-card {
+        margin: 8px 12px;
+    }
+
+    .list-item {
+        padding: 14px 16px;
+    }
+
+    .section-label {
+        padding: 0 16px;
+    }
+
+    input,
+    button {
+        width: 90%;
+    }
+
+    .crop-container {
+        width: 180px;
+        height: 180px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .add-device {
+        max-width: 100%;
+        margin: 0;
+        padding: 12px;
+        border-radius: 0;
+        top: 0;
+        max-height: 100%;
+        height: 100%;
+    }
+
+    .adddevicebtn,
+    .back,
+    .dropbtn {
+        width: 36px;
+        height: 36px;
+        right: 12px;
+    }
+
+    .back {
+        left: 12px;
+    }
+
+    .addicon,
+    .backicon {
+        font-size: 18px;
+    }
+
+    .device-item img {
+        width: 42px;
+        height: 42px;
+    }
+
+    .profile-image-container {
+        width: 85px;
+        height: 85px;
+    }
+
+    #profile-img-preview,
+    #device-img-preview {
+        width: 85px;
+        height: 85px;
+    }
+
+    .footer {
+        height: 58px;
+    }
+
+    .footer button {
+        width: 34px;
+        height: 34px;
+        margin: 0 8px;
+    }
+
+    .toggle-password {
+        right: 25px;
+    }
+
+    .crop-container {
+        width: 160px;
+        height: 160px;
+    }
+
+    .list-item {
+        padding: 12px 14px;
+    }
+}
+
+@media screen and (max-width: 320px) {
+
+    input,
+    button {
+        width: 95%;
+        padding: 9px;
+        font-size: 14px;
+    }
+
+    h1,
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    .header-title {
+        font-size: 20px;
+    }
+
+    .profile-name {
+        font-size: 18px;
+    }
+}
+
+@media screen and (min-width: 1025px) {
+    #app {
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .add-device {
+        max-width: 720px;
+    }
+
+    .list-card {
+        margin: 12px 20px;
+    }
+}
+
+@media screen and (max-width: 767px) and (orientation: landscape) {
+    .footer {
+        height: 48px;
+    }
+
+    .add-device {
+        padding: 10px;
+    }
+}
