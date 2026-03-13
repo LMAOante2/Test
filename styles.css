@@ -527,6 +527,8 @@ p {
 }
 
 .close-add-device-btn {
+    position: relative;
+    bottom: 10px;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(2px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.8);
