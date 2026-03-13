@@ -382,6 +382,13 @@ p {
     }
 }
 
+#espFrame {
+    width: 100%;
+    height: 55vh;
+    min-height: 300px;
+}
+
+
 
 
 #device-img-preview {
@@ -1054,6 +1061,14 @@ p {
 
     .list-item {
         padding: 12px 14px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .add-device {
+        max-height: 100%;
+        height: 100%;
+        overflow-y: auto;
     }
 }
 
