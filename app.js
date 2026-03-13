@@ -147,6 +147,7 @@ function showMainScreen() {
     for (let unsub of infoUnsubscribes) if (typeof unsub === 'function') unsub();
     infoUnsubscribes = [];
     loadDevices();
+    gototop();
 }
 
 function settings() {
@@ -166,6 +167,7 @@ function settings() {
     infoUnsubscribes = [];
 
     loadProfileImage();
+    gototop();
 }
 
 
@@ -220,6 +222,7 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
     showElement('info-screen');
     hideElement('addevicebtn');
     hideElement('footer');
+    gototop();
 
     const infoDeviceNameEl = document.getElementById('info-device-name');
     if (infoDeviceNameEl) {
@@ -890,6 +893,7 @@ window.hideLoader1 = hideLoader1;
 window.toggleDropdown = toggleDropdown;
 window.resetPassword = resetPassword;
 window.closepopup = closepopup;
+window.gototop = gototop;
 
 
 
@@ -1070,5 +1074,10 @@ function closepopup() {
 
 
 window.signInWithGoogle = signInWithGoogle;
+
+
+function gototop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 
