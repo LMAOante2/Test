@@ -46,6 +46,30 @@
 <div id="control-section" style="display:none;">
   <h4 style="color: white;">Status:<span style="margin-left: 10px;" id="status"></span></h4>
   <button id="toggle-button">Toggle</button>
+
+        <div id="brightness" class="half-circle-slider">
+    <label class="brightness-value">Brightness: <span id="brightness-value" style="font-weight: bold;">100%</span></label>
+    <input type="range" id="brightness-slider" min="10" max="100" value="100">
+  </div>
+
+
+
+<div id="schedule-section">
+  <p id="schedule-feedback"></p>
+
+  <div class="schedule-row">
+    <label for="time-on-picker">ON:</label>
+    <input type="time" id="time-on-picker" class="schedule-input">
+    <button id="set-time-on-btn" class="schedule-btn">Set ON</button>
+  </div>
+
+  <div class="schedule-row">
+    <label for="time-off-picker">OFF:</label>
+    <input type="time" id="time-off-picker" class="schedule-input">
+    <button id="set-time-off-btn" class="schedule-btn">Set OFF</button>
+  </div>
+</div>
+
 </div>
 
 <div id="dropdown-content" class="dropdown-content">
@@ -87,8 +111,6 @@ id="espFrame">
         <div class="profile-card">
           <div class="profile-image-container">
             <img id="profile-img-preview" src="default-profile.png" alt="Profile Image">
-            <label for="profile-img-input" class="upload-label"><i class="fa-solid fa-camera"></i></label>
-            <input type="file" id="profile-img-input" accept="image/*" style="display:none;">
           </div>
           <div class="profile-info">
             <div id="showname" class="profile-name"></div>
@@ -116,7 +138,7 @@ id="espFrame">
         </div>
 
         <div class="section-label">Help</div>
-        <div class="list-card">
+        <div class="list-card" onclick="help()">
           <div class="list-item">
             <i class="fa-solid fa-circle-question list-icon"></i>
             <span class="list-text">Help</span>

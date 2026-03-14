@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Devices</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="help.css">
+</head>
+  <script src="screens.js"></script>
+<body>
+
+<button class="backbtn" onclick="backsettings()"><i class="fa-solid fa-chevron-right chevron"></i></button>
+
+
+      <div id="help">
+
+        <div class="section-label">Add device</div>
+
+        <div onclick="showaddhelp()" class="list-card">
+          <div class="list-item" id="addhelp">
+            <span class="list-text">How to add a device?</span>
+            <hr style="width: 400px; border: 1px solid black; margin-top: -15px;">
+            <span>1. Press the + button in the top right corner</span>
+            <span>2. Connect to devices wifi</span>
+            <span >3. Click Setup Device and wait for the window to show up</span>
+            <span >4. Enter Wifi Name, Wifi Password and Device Name</span>
+            <span >5. Click Add Device</span>
+          </div>
+        </div>
+
+        <div class="section-label">Device Offline</div>
+        <div onclick="showofflinehelp()" class="list-card">
+          <div id="offlinehelp" class="list-item">
+            <span class="list-text">Is The Device Offline?</span>
+            <hr style="width: 400px; border: 1px solid black; margin-top: -15px;">
+            <span>1. Check if the device has power.</span>
+            <span>2. Try Reconnecting the device.</span>
+            <span>3. If none of the above worked try factory resetting the device.</span>
+          </div>
+        </div>
+
+        <div class="section-label">Factory Reset</div>
+        <div onclick="factoryhelp()" class="list-card">
+          <div class="list-item" id="factoryhelp">
+            <span class="list-text">How to factory reset the device?</span>
+            <hr style="width: 400px; border: 1px solid black; margin-top: -15px;">
+            <span class="list-text">1. Hold the reset button for 5 seconds</span>
+            <span class="list-text">2. Device is now in Provisioning mode</span>
+          </div>
+        </div>
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>

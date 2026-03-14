@@ -208,6 +208,7 @@ const controlLastSeens = new Map();
 
 function updateDeviceStatus(deviceId) {
     const statusP = document.getElementById(`status-${deviceId}`);
+    const status = document.getElementById('status');
     if (!statusP) return;
 
     const isControllable = deviceIsControllable.get(deviceId);
@@ -222,6 +223,7 @@ function updateDeviceStatus(deviceId) {
             const stateColor = state ? "green" : "red";
             statusP.innerHTML = `Status: <span style="color:${stateColor}; font-weight:bold; font-size:16px;">${state ? 'ON' : 'OFF'}</span>`;
             statusP.style.color = 'white';
+            
         }
     } else {
         const sensorData = sensorDatas.get(deviceId);
@@ -247,6 +249,8 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
     hideElement('addevicebtn');
     hideElement('footer');
     gototop();
+    startScheduler(deviceId);
+
 
     const infoDeviceNameEl = document.getElementById('info-device-name');
     if (infoDeviceNameEl) {
@@ -273,6 +277,8 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
     if (controllable) {
         if (sensorP) sensorP.style.display = 'none';
         if (controlDiv) controlDiv.style.display = 'block';
+        initOnOffScheduler(deviceId);
+
         const stateRef = ref(db, `devices/${deviceId}/control/state`);
         const lastSeenRef = ref(db, `devices/${deviceId}/control/lastSeen`);
         const toggleBtn = document.getElementById('toggle-button');
@@ -284,15 +290,32 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
         let currentLastSeen = undefined;
         let currentOnline = false;
 
-        const updateButton = () => {
-            if (!currentOnline) {
-                toggleBtn.innerText = 'Offline';
-                toggleBtn.disabled = true;
-            } else {
-                toggleBtn.innerText = currentState ? 'Turn Off' : 'Turn On';
-                toggleBtn.disabled = false;
-            }
+const updateButton = () => {
+  if (!currentOnline) {
+    toggleBtn.innerText = 'Offline';
+    toggleBtn.disabled = true;
+      if (brightnessSlider) brightnessSlider.disabled = true;
+      if (timeOnPicker) timeOnPicker.disabled = true;
+      if (timeOffPicker) timeOffPicker.disabled = true;
+      if (setTimeOffBtn) setTimeOffBtn.disabled = true;
+      if (setTimeOnBtn) setTimeOnBtn.disabled = true;
+      setTimeOffBtn.style.cursor = "not-allowed";
+      setTimeOnBtn.style.cursor = "not-allowed";
+      brightnessSlider.style.cursor = "not-allowed";
+  } else {
+    toggleBtn.innerText = currentState ? 'Turn Off' : 'Turn On';
+    toggleBtn.disabled = false;
+      if (brightnessSlider) brightnessSlider.disabled = false;
+      if (timeOffPicker) timeOffPicker.disabled = false;
+      if (timeOnPicker) timeOnPicker.disabled = false;
+      if (setTimeOffBtn) setTimeOffBtn.disabled = false;
+      if (setTimeOnBtn) setTimeOnBtn.disabled = false;
+      setTimeOffBtn.style.cursor = "pointer";
+      setTimeOnBtn.style.cursor = "pointer";
+      brightnessSlider.style.cursor = "pointer";
+  }
         };
+    
         
         const stateUnsub = onValue(stateRef, (stateSnap) => {
             currentState = !!stateSnap.val();
@@ -305,6 +328,36 @@ function showDeviceInfo(deviceId, deviceName, mac, controllable) {
             
         });
         infoUnsubscribes.push(stateUnsub);
+
+        const brightnessRef = ref(db, `devices/${deviceId}/control/brightness`);
+const brightnessSlider = document.getElementById('brightness-slider');
+        const brightnessValue = document.getElementById('brightness-value');
+            const timeOnPicker = document.getElementById("time-on-picker");
+    const timeOffPicker = document.getElementById("time-off-picker");
+    const setTimeOnBtn = document.getElementById("set-time-on-btn");
+    const setTimeOffBtn = document.getElementById("set-time-off-btn");
+
+let brightnessDebounceTimer = null;
+
+const brightnessUnsub = onValue(brightnessRef, (snap) => {
+  const val = snap.exists() ? Number(snap.val()) : 100;
+  if (brightnessSlider) brightnessSlider.value = val;
+  if (brightnessValue) brightnessValue.textContent = `${Math.round(val)}%`;
+});
+infoUnsubscribes.push(brightnessUnsub);
+
+if (brightnessSlider) {
+  brightnessSlider.addEventListener('input', () => {
+    const val = parseInt(brightnessSlider.value);
+    if (brightnessValue) brightnessValue.textContent = `${val}%`;
+
+    clearTimeout(brightnessDebounceTimer);
+    brightnessDebounceTimer = setTimeout(() => {
+      set(brightnessRef, val)
+        .catch(err => console.error("Failed to set brightness:", err));
+    }, 250);
+  });
+}
 
         const lastSeenUnsub = onValue(lastSeenRef, (snap) => {
             const val = snap.val();
@@ -896,26 +949,6 @@ onAuthStateChanged(auth, (user) => {
 });
 
 
-window.login = login;
-window.logout = logout;
-window.signup = signup;
-window.showAddDeviceForm = showAddDeviceForm;
-window.hideAddDeviceForm = hideAddDeviceForm;
-window.showMainScreen = showMainScreen;
-window.settings = settings;
-window.renameDevice = renameDevice;
-window.deleteDevice = deleteDevice;
-window.makeaccount = makeaccount;
-window.loginbtn = loginbtn;
-window.hideLoader = hideLoader;
-window.backsettings = backsettings;
-window.profilesettings = profilesettings;
-window.hideLoader1 = hideLoader1;
-window.toggleDropdown = toggleDropdown;
-window.resetPassword = resetPassword;
-window.closepopup = closepopup;
-window.gototop = gototop;
-
 
 
 const frame = document.getElementById("espFrame");
@@ -1040,6 +1073,10 @@ function profilesettings() {
     window.location.href = 'profile-details.html';
 }
 
+function help() {
+    window.location.href = 'help.html';
+}
+
 function toggleDropdown() {
   document.getElementById("dropdown-content").classList.toggle("show");
 }
@@ -1100,5 +1137,160 @@ window.signInWithGoogle = signInWithGoogle;
 function gototop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+function showaddhelp() {
+    if (document.getElementById("addhelp").style.height == "5px") {
+        document.getElementById("addhelp").style.height = "290px";
+    }
+    else {
+        document.getElementById("addhelp").style.height = "5px";
+    }
+}
+
+function showofflinehelp() {
+    if (document.getElementById("offlinehelp").style.height == "210px") {
+        document.getElementById("offlinehelp").style.height = "5px";
+    }
+    else {
+        document.getElementById("offlinehelp").style.height = "210px";
+    }
+}
+
+function factoryhelp() {
+    if (document.getElementById("factoryhelp").style.height == "150px") {
+        document.getElementById("factoryhelp").style.height = "5px";
+    }
+    else {
+        document.getElementById("factoryhelp").style.height = "150px";
+    }
+}
+
+function initOnOffScheduler(deviceId) {
+    const timeOnPicker = document.getElementById("time-on-picker");
+    const timeOffPicker = document.getElementById("time-off-picker");
+    const setTimeOnBtn = document.getElementById("set-time-on-btn");
+    const setTimeOffBtn = document.getElementById("set-time-off-btn");
+    const feedback = document.getElementById("schedule-feedback");
+
+    if (!timeOnPicker || !timeOffPicker || !setTimeOnBtn || !setTimeOffBtn || !feedback) return;
+
+    const scheduleRef = ref(db, `devices/${deviceId}/control/schedule`);
+
+    let currentSchedule = {};
+
+    get(scheduleRef).then(snapshot => {
+        if (snapshot.exists()) {
+            currentSchedule = snapshot.val();
+
+            if (currentSchedule.on) timeOnPicker.value = currentSchedule.on;
+            if (currentSchedule.off) timeOffPicker.value = currentSchedule.off;
+        }
+    });
+
+    setTimeOnBtn.onclick = () => {
+        const selectedTime = timeOnPicker.value;
+
+        if (!selectedTime) {
+            feedback.style.color = "red";
+            feedback.innerText = "Select ON time";
+            return;
+        }
+
+        currentSchedule.on = selectedTime;
+
+        set(scheduleRef, currentSchedule)
+        .then(() => {
+            feedback.style.color = "lightgreen";
+            feedback.innerText = "ON time saved";
+        })
+        .catch(err => {
+            feedback.style.color = "red";
+            feedback.innerText = err.message;
+        });
+    };
+
+    setTimeOffBtn.onclick = () => {
+        const selectedTime = timeOffPicker.value;
+
+        if (!selectedTime) {
+            feedback.style.color = "red";
+            feedback.innerText = "Select OFF time";
+            return;
+        }
+
+        currentSchedule.off = selectedTime;
+
+        set(scheduleRef, currentSchedule)
+        .then(() => {
+            feedback.style.color = "lightgreen";
+            feedback.innerText = "OFF time saved";
+        })
+        .catch(err => {
+            feedback.style.color = "red";
+            feedback.innerText = err.message;
+        });
+    };
+}
+
+
+function startScheduler(deviceId) {
+
+    const scheduleRef = ref(db, `devices/${deviceId}/control/schedule`);
+    const stateRef = ref(db, `devices/${deviceId}/control/state`);
+
+    setInterval(async () => {
+
+        const snapshot = await get(scheduleRef);
+
+        if (!snapshot.exists()) return;
+
+        const schedule = snapshot.val();
+
+        const now = new Date();
+        const currentTime =
+            String(now.getHours()).padStart(2, '0') + ":" +
+            String(now.getMinutes()).padStart(2, '0');
+
+        if (schedule.on === currentTime) {
+            set(stateRef, true);
+            console.log("Device turned ON by schedule");
+        }
+
+        if (schedule.off === currentTime) {
+            set(stateRef, false);
+            console.log("Device turned OFF by schedule");
+        }
+
+    }, 5000);
+}
+
+
+
+
+window.login = login;
+window.logout = logout;
+window.signup = signup;
+window.showAddDeviceForm = showAddDeviceForm;
+window.hideAddDeviceForm = hideAddDeviceForm;
+window.showMainScreen = showMainScreen;
+window.settings = settings;
+window.renameDevice = renameDevice;
+window.deleteDevice = deleteDevice;
+window.makeaccount = makeaccount;
+window.loginbtn = loginbtn;
+window.hideLoader = hideLoader;
+window.backsettings = backsettings;
+window.profilesettings = profilesettings;
+window.hideLoader1 = hideLoader1;
+window.toggleDropdown = toggleDropdown;
+window.resetPassword = resetPassword;
+window.closepopup = closepopup;
+window.gototop = gototop;
+window.help = help;
+window.showaddhelp = showaddhelp;
+window.showofflinehelp = showofflinehelp;
+window.factoryhelp = factoryhelp;
+window.initOnOffScheduler = initOnOffScheduler;
+window.startScheduler = startScheduler;
 
 
